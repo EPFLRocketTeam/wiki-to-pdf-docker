@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiki to PDF Converter</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        /* General styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            margin: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .button {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            gap: 8px;
+        }
+        .button:hover {
+            background-color: #303f9f;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .button.secondary {
+            background-color: #f5f5f5;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        .button.secondary:hover {
+            background-color: #eeeeee;
+        }
+        /* Tab styling */
+        .tabs {
+            display: flex;
+            cursor: pointer;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            flex: 1;
+            text-align: center;
+            color: #666;
+            font-weight: 500;
+        }
+        .tab.active {
+            color: #3f51b5;
+            border-bottom: 2px solid #3f51b5;
+        }
+        /* Tab content styling */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Input styling */
+        label {
+            font-weight: 500;
+            display: block;
+            margin: 15px 0 5px;
+            color: #333;
+        }
+        input[type="text"],
+        select,
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        /* Radio button styling */
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin: 8px 0;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        input[type="radio"] {
+            margin: 0;
+        }
+        .radio-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+        /* Page entry styling */
+        .page-entry {
+            background-color: #f8f9fa;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .page-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .material-icons {
+            font-size: 20px;
+        }
+    </style>
+    <script>
+        window.onload = function() {
+            // Initialize tabs
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            tabs.forEach((tab, index) => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(content => content.classList.remove('active'));
+                    tab.classList.add('active');
+                    contents[index].classList.add('active');
+                });
+            });
+
+            // Set up default settings for page and login fields
+            addPage();
+            updateLoginFields();
+            document.getElementById('login-type').addEventListener('change', updateLoginFields);
+        };
+
+        function updateLoginFields() {
+            const loginType = document.getElementById('login-type').value;
+            const tokenField = document.getElementById('token-field');
+            const credentialsField = document.getElementById('credentials-field');
+            if (loginType === 'token') {
+                tokenField.style.display = 'block';
+                credentialsField.style.display = 'none';
+            } else {
+                tokenField.style.display = 'none';
+                credentialsField.style.display = 'block';
+            }
+        }
+
+        function addPage() {
+            const pagesDiv = document.getElementById('pages');
+            const pageIndex = pagesDiv.children.length + 1;
+            const newPage = document.createElement('div');
+            newPage.classList.add('page-entry');
+            newPage.innerHTML = `
+                <label>Page Path:</label>
+                <input type="text" name="page-path-${pageIndex}" required />
+                <label>Locale:</label>
+                <select name="locale-${pageIndex}">
+                    <option value="en">EN</option>
+                    <option value="fr">FR</option>
+                    <option value="de">DE</option>
+                    <option value="it">IT</option>
+                </select>
+                <div class="page-actions">
+                    <button type="button" onclick="removePage(this)" class="button secondary">
+                        <span class="material-icons"></span>
+                        Remove Page
+                    </button>
+                </div>
+            `;
+            pagesDiv.appendChild(newPage);
+        }
+
+        function removePage(button) {
+            const pagesDiv = document.getElementById('pages');
+            if (pagesDiv.children.length > 1) {
+                button.closest('.page-entry').remove();
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active">1. Input Settings</div>
+            <div class="tab">2. Markdown</div>
+            <div class="tab">3. Document Code</div>
+            <div class="tab">4. Generated PDF</div>
+        </div>
+
+        <!-- Tab Content -->
+        <!-- Tab 1: Input Settings -->
+        <div class="tab-content active">
+            <form action="/submit" method="POST">
+                <!-- Wiki Parameters -->
+                <label for="wiki-url">Wiki URL:</label>
+                <input type="text" id="wiki-url" name="wiki-url" required />
+
+                <label for="login-type">Login Method:</label>
+                <select id="login-type" name="login-type">
+                    <option value="token">Access Token</option>
+                    <option value="credentials">Username & Password</option>
+                </select>
+
+                <!-- Access Token Field -->
+                <div id="token-field">
+                    <label for="access-token">Access Token:</label>
+                    <input type="text" id="access-token" name="access-token" />
+                </div>
+
+                <!-- Username & Password Fields -->
+                <div id="credentials-field" style="display:none;">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" />
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" />
+                </div>
+
+                <!-- Page Settings -->
+                <div id="pages">
+                    <h3>Pages to Export:</h3>
+                </div>
+                <button type="button" onclick="addPage()" class="button secondary">
+                    <span class="material-icons"></span>
+                    Add Another Page
+                </button>
+
+                <!-- Document Formatting Options -->
+                <h3>Document Formatting Options</h3>
+                <label for="markup">Markup Language:</label>
+                <select id="markup" name="markup">
+                    <option value="latex">LaTeX</option>
+                    <option value="typst">Typst</option>
+                    <option value="quarto">Quarto</option>
+                </select>
+
+                <label for="lua-filter">Lua Filter:</label>
+                <select id="lua-filter" name="lua-filter">
+                    <option value="default">Default</option>
+                    <option value="epfl">EPFL Rocket Team</option>
+                </select>
+
+                <label for="template">Template:</label>
+                <select id="template" name="template">
+                    <option value="default">Default</option>
+                    <option value="epfl">EPFL Rocket Team</option>
+                </select>
+
+                <!-- Compile Options -->
+                <h3>Compile Options</h3>
+                <label class="radio-label">Compile Location:</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="compile-server" name="compile" value="server" checked />
+                        <label for="compile-server">Server</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="compile-browser" name="compile" value="browser" />
+                        <label for="compile-browser">Browser</label>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="button">
+                    <span class="material-icons"></span>
+                    Convert to PDF
+                </button>
+            </form>
+        </div>
+
+        <!-- Tab 2: Markdown Display -->
+        <div class="tab-content">
+            <h2>Markdown Content</h2>
+            <pre id="markdown-content" style="background: #f0f0f0; padding: 10px;"></pre>
+        </div>
+
+        <!-- Tab 3: Document Code -->
+        <div class="tab-content">
+            <h2>Document Code</h2>
+            <pre id="document-code" style="background: #f0f0f0; padding: 10px;"></pre>
+        </div>
+
+        <!-- Tab 4: Generated PDF -->
+        <div class="tab-content">
+            <h2>Generated PDF</h2>
+            <button class="button">
+                <span class="material-icons">download</span>
+                Download PDF
+            </button>
+        </div>
+    </div>
+</body>
+</html>
