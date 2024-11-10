@@ -187,84 +187,120 @@
             }
         }
 
-        function updatePagePath(input) {
-            const pageEntry = input.closest('.page-entry');
-            const pathInput = pageEntry.querySelector('.page-path-input');
-            const localeSelect = pageEntry.querySelector('.locale-select');
-            const wikiUrl = document.getElementById('wiki-url').value.trim();
-            
-            if (!wikiUrl) {
-                pathInput.value = 'Please enter Wiki URL first';
-                return;
-            }
+	let selectedPages = []; // Array to hold page paths
 
-            try {
-                const fullUrl = input.value.trim();
-                if (!fullUrl) {
-                    pathInput.value = '';
-                    return;
-                }
+	// Modify addPage to update selectedPages and selectors
+	function addPage() {
+	    const pagesDiv = document.getElementById('pages');
+	    const pageIndex = pagesDiv.children.length + 1;
+	    const newPage = document.createElement('div');
+	    newPage.classList.add('page-entry');
+	    newPage.innerHTML = `
+		<label>Full Page URL:</label>
+		<input type="text" name="full-url-${pageIndex}" class="full-url-input" 
+		       oninput="updatePagePath(this)" 
+		       placeholder="e.g., https://rocket-team.epfl.ch/en/management" required />
+		<label>Extracted Page Path:</label>
+		<input type="text" name="page-path-${pageIndex}" class="page-path-input" readonly />
+		<label>Locale:</label>
+		<select name="locale-${pageIndex}" class="locale-select">
+		    <option value="en">EN</option>
+		    <option value="fr">FR</option>
+		    <option value="de">DE</option>
+		    <option value="it">IT</option>
+		</select>
+		<div class="page-actions">
+		    <button type="button" onclick="removePage(this, ${pageIndex})" class="button secondary">
+			<span class="material-icons"></span>
+			Don't Export This Page
+		    </button>
+		</div>
+	    `;
+	    pagesDiv.appendChild(newPage);
 
-                const baseUrl = wikiUrl.replace(/\/+$/, '');
-                
-                if (!fullUrl.startsWith(baseUrl)) {
-                    pathInput.value = 'URL must start with Wiki URL';
-                    return;
-                }
+	    // Add placeholder path for the new page and update selectors
+	    selectedPages.push(""); // Placeholder for now
+	    updatePageSelectors();
+	}
 
-                let pagePath = fullUrl.substring(baseUrl.length).replace(/^\/+/, '');
-                pagePath = pagePath.replace(/\/+$/, '');
-                
-                const pathSegments = pagePath.split('/');
-                const firstSegment = pathSegments[0].toLowerCase();
-                const validLocales = ['en', 'fr', 'de', 'it'];
-                
-                if (validLocales.includes(firstSegment)) {
-                    localeSelect.value = firstSegment;
-                    pagePath = pathSegments.slice(1).join('/');
-                }
-                
-                pathInput.value = pagePath;
-            } catch (error) {
-                pathInput.value = 'Invalid URL format';
-            }
-        }
+	// Update page path and selectedPages
+	function updatePagePath(input) {
+	    const pageEntry = input.closest('.page-entry');
+	    const pathInput = pageEntry.querySelector('.page-path-input');
+	    const localeSelect = pageEntry.querySelector('.locale-select');
+	    const wikiUrl = document.getElementById('wiki-url').value.trim();
 
-        function addPage() {
-            const pagesDiv = document.getElementById('pages');
-            const pageIndex = pagesDiv.children.length + 1;
-            const newPage = document.createElement('div');
-            newPage.classList.add('page-entry');
-            newPage.innerHTML = `
-                <label>Full Page URL:</label>
-                <input type="text" name="full-url-${pageIndex}" class="full-url-input" 
-                       onInput="updatePagePath(this)" 
-                       placeholder="e.g., https://rocket-team.epfl.ch/en/management" required />
-                <label>Extracted Page Path:</label>
-                <input type="text" name="page-path-${pageIndex}" class="page-path-input" readonly />
-                <label>Locale:</label>
-                <select name="locale-${pageIndex}" class="locale-select">
-                    <option value="en">EN</option>
-                    <option value="fr">FR</option>
-                    <option value="de">DE</option>
-                    <option value="it">IT</option>
-                </select>
-                <div class="page-actions">
-                    <button type="button" onclick="removePage(this)" class="button secondary">
-                        <span class="material-icons"></span>
-                        Don't Export This Page
-                    </button>
-                </div>
-            `;
-            pagesDiv.appendChild(newPage);
-        }
+	    if (!wikiUrl) {
+		pathInput.value = 'Please enter Wiki URL first';
+		return;
+	    }
 
-        function removePage(button) {
-            const pagesDiv = document.getElementById('pages');
-            if (pagesDiv.children.length > 1) {
-                button.closest('.page-entry').remove();
-            }
-        }
+	    try {
+		const fullUrl = input.value.trim();
+		if (!fullUrl) {
+		    pathInput.value = '';
+		    rebuildSelectedPages(); // Update selectedPages based on current DOM
+		    updatePageSelectors();
+		    return;
+		}
+
+		const baseUrl = wikiUrl.replace(/\/+$/, '');
+		if (!fullUrl.startsWith(baseUrl)) {
+		    pathInput.value = 'URL must start with Wiki URL';
+		    return;
+		}
+
+		let pagePath = fullUrl.substring(baseUrl.length).replace(/^\/+/, '').replace(/\/+$/, '');
+		
+		// Check for locale in the first segment
+		const pathSegments = pagePath.split('/');
+		const firstSegment = pathSegments[0].toLowerCase();
+		const validLocales = ['en', 'fr', 'de', 'it'];
+		
+		if (validLocales.includes(firstSegment)) {
+		    localeSelect.value = firstSegment; // Set the locale dropdown
+		    pagePath = pathSegments.slice(1).join('/'); // Remove locale from path
+		}
+		
+		pathInput.value = pagePath;
+		rebuildSelectedPages(); // Refresh selectedPages from current page-path-inputs
+		updatePageSelectors();
+	    } catch (error) {
+		pathInput.value = 'Invalid URL format';
+	    }
+	}
+
+	function removePage(button) {
+	    const pagesDiv = document.getElementById('pages');
+	    if (pagesDiv.children.length > 1) {
+		button.closest('.page-entry').remove();
+		rebuildSelectedPages(); // Rebuild selectedPages after removal
+		updatePageSelectors();
+	    }
+	}
+
+	// Helper function to rebuild selectedPages based on the current DOM
+	function rebuildSelectedPages() {
+	    selectedPages = Array.from(document.querySelectorAll('.page-path-input'))
+				 .map(input => input.value);
+	}
+
+	// Update page selectors on tabs 2, 3, and 4
+	function updatePageSelectors() {
+	    const selectors = document.querySelectorAll('#markdown-page-selector, #document-code-selector, #pdf-selector');
+	    
+	    selectors.forEach(selector => {
+		selector.innerHTML = ''; // Clear existing options
+		selectedPages.forEach((pagePath, index) => {
+		    const option = document.createElement('option');
+		    option.value = index;
+		    // Label format: "Page N: path/to/page" or just "Page N" if path is empty
+		    option.textContent = `Page ${index + 1}${pagePath ? `: ${pagePath}` : ''}`;
+		    selector.appendChild(option);
+		});
+	    });
+	}
+
     </script>
 </head>
 <body>
@@ -328,6 +364,12 @@
         <!-- Tab 2: Markdown Display -->
         <div class="tab-content">
             <h2>Markdown Content</h2>
+	    <!-- Selector for Pages -->
+	    <label for="markdown-page-selector">Select Page:</label>
+	    <select id="markdown-page-selector" onchange="loadMarkdownContent(this.value)">
+	    <!-- Options will be populated dynamically -->
+	    </select>
+
             <div class="code-display" id="markdown-content"></div>
 
             <h3>Front Page Settings</h3>
@@ -375,6 +417,11 @@
         <!-- Tab 3: Document Code -->
         <div class="tab-content">
             <h2>Document Code</h2>
+
+	    <label for="document-code-selector">Select Page:</label>
+	    <select id="document-code-selector" onchange="loadMarkdownContent(this.value)">
+	    </select>
+
             <div class="code-display" id="document-code"></div>
 
             <h3>Compile Options</h3>
@@ -399,6 +446,11 @@
         <!-- Tab 4: Generated PDF -->
         <div class="tab-content">
             <h2>Generated PDF</h2>
+
+	    <label for="pdf-selector">Select Page:</label>
+	    <select id="pdf-selector" onchange="loadMarkdownContent(this.value)">
+	    </select>
+
             <div id="pdf-preview" style="min-height: 400px; background: #f0f0f0; margin: 20px 0;"></div>
             <button class="button">
                 <span class="material-icons">download</span>
