@@ -6,6 +6,7 @@
     <title>Wiki to PDF Converter</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
     <style>
         /* General styling */
         body {
@@ -309,10 +310,12 @@
                     Add Another Page To Export
                 </button>
 
+		<div>
                 <button type="submit" class="button">
                     <span class="material-icons">description</span>
                     Extract Markdown
                 </button>
+		</div>
             </form>
         </div>
 
@@ -326,7 +329,7 @@
             <input type="text" id="author" name="author" placeholder="Author name" />
 
             <label for="date">Date:</label>
-            <input type="date" id="date" name="date" />
+	    <input type="text" id="date" name="date" placeholder="dd-mm-yyyy" required>
 
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" placeholder="Document Title" />
@@ -394,5 +397,13 @@
             </button>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // Initialize flatpickr for the date input field
+        flatpickr("#date", {
+            dateFormat: "d-m-Y",  // Format: dd-mm-yyyy
+        });
+    </script>
 </body>
 </html>
