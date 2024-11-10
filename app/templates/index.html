@@ -132,6 +132,12 @@
         .material-icons {
             font-size: 20px;
         }
+        /* Error message styling */
+        .error-message {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 4px;
+        }
     </style>
     <script>
         window.onload = function() {
@@ -172,8 +178,11 @@
             const newPage = document.createElement('div');
             newPage.classList.add('page-entry');
             newPage.innerHTML = `
-                <label>Page Path:</label>
-                <input type="text" name="page-path-${pageIndex}" required />
+                <label>Full Page URL:</label>
+                <input type="text" name="full-url-${pageIndex}" class="full-url-input" 
+                       onInput="updatePagePath(this)" required />
+                <label>Extracted Page Path:</label>
+                <input type="text" name="page-path-${pageIndex}" class="page-path-input" readonly />
                 <label>Locale:</label>
                 <select name="locale-${pageIndex}">
                     <option value="en">EN</option>
@@ -184,11 +193,47 @@
                 <div class="page-actions">
                     <button type="button" onclick="removePage(this)" class="button secondary">
                         <span class="material-icons"></span>
-                        Remove Page
+                        Don't Export This Page
                     </button>
                 </div>
             `;
             pagesDiv.appendChild(newPage);
+        }
+
+        function updatePagePath(input) {
+            const pageEntry = input.closest('.page-entry');
+            const pathInput = pageEntry.querySelector('.page-path-input');
+            const wikiUrl = document.getElementById('wiki-url').value.trim();
+            
+            if (!wikiUrl) {
+                pathInput.value = 'Please enter Wiki URL first';
+                return;
+            }
+
+            try {
+                const fullUrl = input.value.trim();
+                if (!fullUrl) {
+                    pathInput.value = '';
+                    return;
+                }
+
+                // Remove trailing slashes from wiki URL for consistent comparison
+                const baseUrl = wikiUrl.replace(/\/+$/, '');
+                
+                if (!fullUrl.startsWith(baseUrl)) {
+                    pathInput.value = 'URL must start with Wiki URL';
+                    return;
+                }
+
+                // Extract the path by removing the base URL and any leading slashes
+                let pagePath = fullUrl.substring(baseUrl.length).replace(/^\/+/, '');
+                // Remove trailing slashes as well
+                pagePath = pagePath.replace(/\/+$/, '');
+                
+                pathInput.value = pagePath;
+            } catch (error) {
+                pathInput.value = 'Invalid URL format';
+            }
         }
 
         function removePage(button) {
@@ -197,6 +242,14 @@
                 button.closest('.page-entry').remove();
             }
         }
+
+        // Add event listener to wiki URL input to update all page paths when it changes
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('wiki-url').addEventListener('input', function() {
+                const fullUrlInputs = document.querySelectorAll('.full-url-input');
+                fullUrlInputs.forEach(input => updatePagePath(input));
+            });
+        });
     </script>
 </head>
 <body>
@@ -215,7 +268,8 @@
             <form action="/submit" method="POST">
                 <!-- Wiki Parameters -->
                 <label for="wiki-url">Wiki URL:</label>
-                <input type="text" id="wiki-url" name="wiki-url" required />
+                <input type="text" id="wiki-url" name="wiki-url" required 
+                       placeholder="e.g., https://rocket-team.epfl.ch" />
 
                 <label for="login-type">Login Method:</label>
                 <select id="login-type" name="login-type">
@@ -243,7 +297,7 @@
                 </div>
                 <button type="button" onclick="addPage()" class="button secondary">
                     <span class="material-icons"></span>
-                    Add Another Page
+                    Add Another Page To Export
                 </button>
 
                 <!-- Document Formatting Options -->
