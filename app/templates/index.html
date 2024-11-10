@@ -138,6 +138,11 @@
             font-size: 14px;
             margin-top: 4px;
         }
+        /* Readonly input styling */
+        input[readonly] {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
     </style>
     <script>
         window.onload = function() {
@@ -172,37 +177,10 @@
             }
         }
 
-        function addPage() {
-            const pagesDiv = document.getElementById('pages');
-            const pageIndex = pagesDiv.children.length + 1;
-            const newPage = document.createElement('div');
-            newPage.classList.add('page-entry');
-            newPage.innerHTML = `
-                <label>Full Page URL:</label>
-                <input type="text" name="full-url-${pageIndex}" class="full-url-input" 
-                       onInput="updatePagePath(this)" required />
-                <label>Extracted Page Path:</label>
-                <input type="text" name="page-path-${pageIndex}" class="page-path-input" readonly />
-                <label>Locale:</label>
-                <select name="locale-${pageIndex}">
-                    <option value="en">EN</option>
-                    <option value="fr">FR</option>
-                    <option value="de">DE</option>
-                    <option value="it">IT</option>
-                </select>
-                <div class="page-actions">
-                    <button type="button" onclick="removePage(this)" class="button secondary">
-                        <span class="material-icons"></span>
-                        Don't Export This Page
-                    </button>
-                </div>
-            `;
-            pagesDiv.appendChild(newPage);
-        }
-
         function updatePagePath(input) {
             const pageEntry = input.closest('.page-entry');
             const pathInput = pageEntry.querySelector('.page-path-input');
+            const localeSelect = pageEntry.querySelector('.locale-select');
             const wikiUrl = document.getElementById('wiki-url').value.trim();
             
             if (!wikiUrl) {
@@ -227,13 +205,54 @@
 
                 // Extract the path by removing the base URL and any leading slashes
                 let pagePath = fullUrl.substring(baseUrl.length).replace(/^\/+/, '');
-                // Remove trailing slashes as well
+                // Remove trailing slashes
                 pagePath = pagePath.replace(/\/+$/, '');
+                
+                // Check if the first segment is a locale
+                const pathSegments = pagePath.split('/');
+                const firstSegment = pathSegments[0].toLowerCase();
+                const validLocales = ['en', 'fr', 'de', 'it'];
+                
+                if (validLocales.includes(firstSegment)) {
+                    // Set the locale in the select dropdown
+                    localeSelect.value = firstSegment;
+                    // Remove the locale from the page path
+                    pagePath = pathSegments.slice(1).join('/');
+                }
                 
                 pathInput.value = pagePath;
             } catch (error) {
                 pathInput.value = 'Invalid URL format';
             }
+        }
+
+        function addPage() {
+            const pagesDiv = document.getElementById('pages');
+            const pageIndex = pagesDiv.children.length + 1;
+            const newPage = document.createElement('div');
+            newPage.classList.add('page-entry');
+            newPage.innerHTML = `
+                <label>Full Page URL:</label>
+                <input type="text" name="full-url-${pageIndex}" class="full-url-input" 
+                       onInput="updatePagePath(this)" 
+                       placeholder="e.g., https://rocket-team.epfl.ch/en/management" required />
+                <label>Extracted Page Path:</label>
+                <input type="text" name="page-path-${pageIndex}" class="page-path-input" readonly />
+                <label>Locale:</label>
+                <select name="locale-${pageIndex}" class="locale-select">
+                    <option value="en">EN</option>
+                    <option value="fr">FR</option>
+                    <option value="de">DE</option>
+                    <option value="it">IT</option>
+                </select>
+                <div class="page-actions">
+                    <button type="button" onclick="removePage(this)" class="button secondary">
+                        <span class="material-icons"></span>
+                        Don't Export This Page
+                    </button>
+                </div>
+            `;
+            pagesDiv.appendChild(newPage);
         }
 
         function removePage(button) {
