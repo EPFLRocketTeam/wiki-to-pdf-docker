@@ -284,23 +284,29 @@
                 <label for="wiki-url">Wiki URL:</label>
                 <input type="text" id="wiki-url" name="wiki-url" required placeholder="e.g., https://rocket-team.epfl.ch" />
 
-                <label for="login-type">Login Method:</label>
+                <!--label for="login-type">Login Method:</label>
                 <select id="login-type" name="login-type">
                     <option value="token">Access Token</option>
                     <option value="credentials">Username & Password</option>
-                </select>
+                </select-->
 
                 <div id="token-field">
-                    <label for="access-token">Access Token:</label>
+		    <label for="access-token">
+		    Access Token 
+		    <a href="/how-to-get-access-token" target="_blank" style="font-size: 14px; color: #3f51b5; text-decoration: underline; margin-left: 5px;">
+		    How to obtain access token
+		    </a>
                     <input type="text" id="access-token" name="access-token" />
+</label>
+
                 </div>
 
-                <div id="credentials-field" style="display:none;">
+                <!--div id="credentials-field" style="display:none;">
                     <label for="username">Username:</label>
                     <input type="text" id="username" name="username" />
                     <label for="password">Password:</label>
                     <input type="password" id="password" name="password" />
-                </div>
+                </div-->
 
                 <div id="pages">
                     <h3>Pages to Export:</h3>
@@ -341,20 +347,23 @@
             <label for="markup">Markup Language:</label>
             <select id="markup" name="markup">
                 <option value="latex">LaTeX</option>
-                <option value="typst">Typst</option>
-                <option value="quarto">Quarto</option>
+                <option value="typst" disabled>Typst</option>
+                <option value="quarto" disabled>Quarto</option>
             </select>
 
             <label for="lua-filter">Lua Filter:</label>
             <select id="lua-filter" name="lua-filter">
-                <option value="default">Default</option>
                 <option value="epfl">EPFL Rocket Team</option>
+                <option value="default" disabled>Default</option>
             </select>
 
             <label for="template">Template:</label>
             <select id="template" name="template">
-                <option value="default">Default</option>
-                <option value="epfl">EPFL Rocket Team</option>
+                <option value="epfl-space-race">EPFL Rocket Team - Space Race</option>
+                <option value="epfl-space-race">EPFL Rocket Team - Competition</option>
+                <option value="epfl-space-race">EPFL Rocket Team - Icarus</option>
+                <option value="epfl-space-race">EPFL Rocket Team - Hyperion</option>
+                <option value="default" disabled>Default</option>
             </select>
 
             <button class="button">
@@ -375,10 +384,10 @@
                     <input type="radio" id="compile-server" name="compile" value="server" checked />
                     <label for="compile-server">Server</label>
                 </div>
-                <div class="radio-option">
+                <!--div class="radio-option">
                     <input type="radio" id="compile-browser" name="compile" value="browser" />
                     <label for="compile-browser">Browser</label>
-                </div>
+                </div-->
             </div>
 
             <button class="button">

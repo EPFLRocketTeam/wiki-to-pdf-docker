@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Get Access Token</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+        code {
+            color: #d14;
+        }
+    </style>
+</head>
+<body>
+    <h1>How to Obtain an Access Token</h1>
+    <p>To authenticate with our GraphQL API, you can obtain a JWT access token by using the following GraphQL mutation:</p>
+    <pre><code>mutation {
+  authentication {
+    login(
+      username: "your-username",
+      password: "your-password",
+      strategy: "local"
+    ) {
+      jwt
+    }
+  }
+}</code></pre>
+    <p>Replace <code>your-username</code> and <code>your-password</code> with your actual credentials.</p>
+    <p>Once you execute this mutation on the <a href="https://rocket-team.epfl.ch/graphql" target="_blank">GraphQL endpoint</a>, it will return a JWT access token, which you can use for authentication in further requests.</p>
+</body>
+</html>

@@ -7,6 +7,10 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/how-to-get-access-token')
+def how_to_get_access_token():
+    return render_template('how_to_get_access_token.html')
+
 # Route to handle the form submission
 @app.route('/submit', methods=['POST'])
 def submit():
