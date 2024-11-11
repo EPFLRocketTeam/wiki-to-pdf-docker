@@ -193,7 +193,7 @@
             <input type="text" id="title" name="title" placeholder="Document Title" />
 
             <label for="document-id">Document ID:</label>
-            <input type="text" id="document-id" name="document-id" placeholder="Unique Document ID" />
+            <input type="text" id="document-id" name="document-id" placeholder="e.g., 202X_P_SS_DOC"/>
 
             <h3>Document Formatting Options</h3>
             <!--label for="markup">Markup Language:</label>
@@ -273,6 +273,7 @@
             let selectedPages = [];  // Array to hold page paths
             let pageContents = {};   // Holds fetched content for each path
             let monacoEditor = null;
+	    let pageMetadata = {};  // Store metadata for each page
 
             // Initialize Monaco Editor
             require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
@@ -415,6 +416,13 @@
 		.then(data => {
 		    selectedPages.forEach((path, index) => {
 			pageContents[path] = data[index]?.content || "Content not available";
+			// Store metadata for each page
+			pageMetadata[path] = {
+			    author: data[index]?.authorName || 'Default Author',
+			    title: data[index]?.title || 'Untitled Document',
+			    date: new Date().toISOString().split('T')[0], // Sets today's date in YYYY-MM-DD format
+			    documentId: "202X_P_SS_DOC" // Placeholder for document-id
+			};
 		    });
 		    loadMarkdownContent(0);
 
@@ -430,12 +438,48 @@
 		.catch(error => console.error('Error fetching content:', error));
 	    }
 
+	    // Function to update metadata when a user modifies input fields
+	    function updateMetadata(field, value, pagePath) {
+		if (!pageMetadata[pagePath]) {
+		    pageMetadata[pagePath] = {};
+		}
+		pageMetadata[pagePath][field] = value;
+		console.log("Updated metadata:", pageMetadata);  // For debugging
+	    }
+
+	    // Attach event listeners to fields to capture changes
+	    function attachMetadataListeners(pagePath) {
+		document.getElementById("author").addEventListener("input", (e) => {
+		    updateMetadata("author", e.target.value, pagePath);
+		});
+		document.getElementById("date").addEventListener("change", (e) => {
+		    updateMetadata("date", e.target.value, pagePath);
+		});
+		document.getElementById("title").addEventListener("input", (e) => {
+		    updateMetadata("title", e.target.value, pagePath);
+		});
+		document.getElementById("document-id").addEventListener("input", (e) => {
+		    updateMetadata("documentId", e.target.value, pagePath);
+		});
+	    }
+
+	    // Load page-specific metadata into fields when a page is selected
+	    function loadMetadata(pagePath) {
+		const metadata = pageMetadata[pagePath] || {};
+		document.getElementById("author").value = metadata.author || "";
+		document.getElementById("date").value = metadata.date || "";
+		document.getElementById("title").value = metadata.title || "";
+		document.getElementById("document-id").value = metadata.documentId || "";
+	    }
+
             // Load Markdown content based on page selection
             function loadMarkdownContent(index) {
                 const path = selectedPages[index];
                 if (monacoEditor) {
                     monacoEditor.setValue(pageContents[path] || 'No content loaded');
                 }
+		loadMetadata(path);  // Load existing metadata into fields
+		attachMetadataListeners(path);  // Attach listeners to update metadata on change
             }
 
             // Update page selectors on tabs 2, 3, and 4

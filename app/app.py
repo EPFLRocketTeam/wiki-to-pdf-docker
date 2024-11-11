@@ -30,6 +30,7 @@ def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) ->
                     title
                     createdAt
                     updatedAt
+                    authorName
                     content
                 }}
             }}
