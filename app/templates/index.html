@@ -113,7 +113,14 @@
             color: #495057;
             cursor: not-allowed;
         }
+        /* Monaco editor container */
+        #monaco-editor {
+            height: 500px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -150,12 +157,12 @@
                     Add Another Page To Export
                 </button>
 
-		<div>
+                <div>
                 <button type="submit" class="button">
                     <span class="material-icons">description</span>
                     Extract Markdown
                 </button>
-		</div>
+                </div>
             </form>
         </div>
 
@@ -167,16 +174,16 @@
                 <!-- Options will be populated dynamically -->
             </select>
 
-            <div class="code-display" id="markdown-content"></div>
+            <div id="monaco-editor"></div>
         </div>
 
         <!-- Tab 3: Document Code -->
         <div class="tab-content">
             <h2>Document Code</h2>
 
-	    <label for="document-code-selector">Select Page:</label>
-	    <select id="document-code-selector" onchange="loadMarkdownContent(this.value)">
-	    </select>
+            <label for="document-code-selector">Select Page:</label>
+            <select id="document-code-selector" onchange="loadMarkdownContent(this.value)">
+            </select>
 
             <div class="code-display" id="document-code"></div>
 
@@ -203,9 +210,9 @@
         <div class="tab-content">
             <h2>Generated PDF</h2>
 
-	    <label for="pdf-selector">Select Page:</label>
-	    <select id="pdf-selector" onchange="loadMarkdownContent(this.value)">
-	    </select>
+            <label for="pdf-selector">Select Page:</label>
+            <select id="pdf-selector" onchange="loadMarkdownContent(this.value)">
+            </select>
 
             <div id="pdf-preview" style="min-height: 400px; background: #f0f0f0; margin: 20px 0;"></div>
             <button class="button">
@@ -218,6 +225,23 @@
         <script>
             let selectedPages = [];  // Array to hold page paths
             let pageContents = {};   // Holds fetched content for each path
+            let monacoEditor = null;
+
+            // Initialize Monaco Editor
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+            require(['vs/editor/editor.main'], function() {
+                monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
+                    value: '',
+                    language: 'markdown',
+                    theme: 'vs-light',
+                    automaticLayout: true,
+                    minimap: {
+                        enabled: true
+                    },
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on'
+                });
+            });
 
             window.onload = function() {
                 const tabs = document.querySelectorAll('.tab');
@@ -229,6 +253,11 @@
                         contents.forEach(content => content.classList.remove('active'));
                         tab.classList.add('active');
                         contents[index].classList.add('active');
+                        
+                        // Trigger Monaco Editor layout update when switching to Markdown tab
+                        if (index === 1 && monacoEditor) {
+                            monacoEditor.layout();
+                        }
                     });
                 });
 
@@ -254,17 +283,17 @@
                         <option value="de">DE</option>
                         <option value="it">IT</option>
                     </select>
-		    <div class="page-actions">
-			<button type="button" onclick="removePage(this, ${pageIndex})" class="button secondary">
-			    <span class="material-icons"></span>
-			    Don't Export This Page
-			</button>
-		    </div>
+                    <div class="page-actions">
+                        <button type="button" onclick="removePage(this, ${pageIndex})" class="button secondary">
+                            <span class="material-icons"></span>
+                            Don't Export This Page
+                        </button>
+                    </div>
                 `;
                 pagesDiv.appendChild(newPage);
 
                 selectedPages.push("");  // Placeholder
-		updatePageSelectors();
+                updatePageSelectors();
             }
 
             // Updates page paths and handles locale extraction
@@ -293,17 +322,17 @@
 
                 pathInput.value = pagePath;
                 rebuildSelectedPages();
-		updatePageSelectors();
+                updatePageSelectors();
             }
 
-	    function removePage(button) {
-		const pagesDiv = document.getElementById('pages');
-		if (pagesDiv.children.length > 1) {
-		    button.closest('.page-entry').remove();
-		    rebuildSelectedPages(); // Rebuild selectedPages after removal
-		    updatePageSelectors();
-		}
-	    }
+            function removePage(button) {
+                const pagesDiv = document.getElementById('pages');
+                if (pagesDiv.children.length > 1) {
+                    button.closest('.page-entry').remove();
+                    rebuildSelectedPages(); // Rebuild selectedPages after removal
+                    updatePageSelectors();
+                }
+            }
 
             // Helper function to rebuild selectedPages array
             function rebuildSelectedPages() {
@@ -342,24 +371,26 @@
             // Load Markdown content based on page selection
             function loadMarkdownContent(index) {
                 const path = selectedPages[index];
-                document.getElementById('markdown-content').textContent = pageContents[path] || 'No content loaded';
+                if (monacoEditor) {
+                    monacoEditor.setValue(pageContents[path] || 'No content loaded');
+                }
             }
 
-	    // Update page selectors on tabs 2, 3, and 4
-	    function updatePageSelectors() {
-		const selectors = document.querySelectorAll('#markdown-page-selector, #document-code-selector, #pdf-selector');
-		
-		selectors.forEach(selector => {
-		    selector.innerHTML = ''; // Clear existing options
-		    selectedPages.forEach((pagePath, index) => {
-			const option = document.createElement('option');
-			option.value = index;
-			// Label format: "Page N: path/to/page" or just "Page N" if path is empty
-			option.textContent = `Page ${index + 1}${pagePath ? `: ${pagePath}` : ''}`;
-			selector.appendChild(option);
-		    });
-		});
-	    }
+            // Update page selectors on tabs 2, 3, and 4
+            function updatePageSelectors() {
+                const selectors = document.querySelectorAll('#markdown-page-selector, #document-code-selector, #pdf-selector');
+                
+                selectors.forEach(selector => {
+                    selector.innerHTML = ''; // Clear existing options
+                    selectedPages.forEach((pagePath, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        // Label format: "Page N: path/to/page" or just "Page N" if path is empty
+                        option.textContent = `Page ${index + 1}${pagePath ? `: ${pagePath}` : ''}`;
+                        selector.appendChild(option);
+                    });
+                });
+            }
         </script>
     </div>
 </body>
