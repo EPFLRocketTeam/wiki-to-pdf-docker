@@ -177,6 +177,48 @@
             <div id="monaco-editor"></div>
         </div>
 
+            <h3>Front Page Settings</h3>
+            <label for="author">Author:</label>
+            <input type="text" id="author" name="author" placeholder="Author name" />
+
+            <label for="date">Date:</label>
+	    <input type="text" id="date" name="date" placeholder="dd-mm-yyyy" required>
+
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" placeholder="Document Title" />
+
+            <label for="document-id">Document ID:</label>
+            <input type="text" id="document-id" name="document-id" placeholder="Unique Document ID" />
+
+            <h3>Document Formatting Options</h3>
+            <label for="markup">Markup Language:</label>
+            <select id="markup" name="markup">
+                <option value="latex">LaTeX</option>
+                <option value="typst" disabled>Typst</option>
+                <option value="quarto" disabled>Quarto</option>
+            </select>
+
+            <label for="lua-filter">Lua Filter:</label>
+            <select id="lua-filter" name="lua-filter">
+                <option value="epfl">EPFL Rocket Team</option>
+                <option value="default" disabled>Default</option>
+            </select>
+
+            <label for="template">Template:</label>
+            <select id="template" name="template">
+                <option value="epfl-space-race">EPFL Rocket Team - Space Race</option>
+                <option value="epfl-space-race">EPFL Rocket Team - Competition</option>
+                <option value="epfl-space-race">EPFL Rocket Team - Icarus</option>
+                <option value="epfl-space-race">EPFL Rocket Team - Hyperion</option>
+                <option value="default" disabled>Default</option>
+            </select>
+
+            <button class="button">
+                <span class="material-icons">code</span>
+                Convert to Document Code
+            </button>
+        </div>
+
         <!-- Tab 3: Document Code -->
         <div class="tab-content">
             <h2>Document Code</h2>
