@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
     <style>
         /* General styling */
         body {
@@ -120,7 +122,6 @@
             margin: 20px 0;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -137,9 +138,14 @@
         <div class="tab-content active">
             <form id="settings-form" onsubmit="fetchWikiContents(event)">
                 <label for="wiki-url">Wiki URL:</label>
-                <input type="text" id="wiki-url" name="wiki-url" required placeholder="e.g., https://rocket-team.epfl.ch" />
+                <input type="text" id="wiki-url" name="wiki-url" required placeholder="e.g., https://rocket-team.epfl.ch" value="https://rocket-team.epfl.ch" />
 
-                <div id="token-field">
+                <label for="login-field">Login (of your wiki account):</label>
+                <input type="text" id="email" name="wiki-url" required placeholder="email" />
+                <input type="password" id="password" name="wiki-url" required placeholder="password" />
+
+
+                <!--div id="token-field">
                     <label for="access-token">
                         Access Token 
                         <a href="/how-to-get-access-token" target="_blank" style="font-size: 14px; color: #3f51b5; text-decoration: underline; margin-left: 5px;">
@@ -147,7 +153,7 @@
                         </a>
                         <input type="text" id="access-token" name="access-token" required />
                     </label>
-                </div>
+                </div-->
 
                 <div id="pages">
                     <h3>Pages to Export:</h3>
@@ -181,7 +187,7 @@
             <input type="text" id="author" name="author" placeholder="Author name" />
 
             <label for="date">Date:</label>
-	    <input type="text" id="date" name="date" placeholder="dd-mm-yyyy" required>
+	    <input type="date" id="date" name="date" placeholder="dd-mm-yyyy" required>
 
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" placeholder="Document Title" />
@@ -190,7 +196,7 @@
             <input type="text" id="document-id" name="document-id" placeholder="Unique Document ID" />
 
             <h3>Document Formatting Options</h3>
-            <label for="markup">Markup Language:</label>
+            <!--label for="markup">Markup Language:</label>
             <select id="markup" name="markup">
                 <option value="latex">LaTeX</option>
                 <option value="typst" disabled>Typst</option>
@@ -201,7 +207,7 @@
             <select id="lua-filter" name="lua-filter">
                 <option value="epfl">EPFL Rocket Team</option>
                 <option value="default" disabled>Default</option>
-            </select>
+            </select-->
 
             <label for="template">Template:</label>
             <select id="template" name="template">
@@ -228,18 +234,18 @@
 
             <div class="code-display" id="document-code"></div>
 
-            <h3>Compile Options</h3>
+            <!--h3>Compile Options</h3>
             <label class="radio-label">Compile Location:</label>
             <div class="radio-group">
                 <div class="radio-option">
                     <input type="radio" id="compile-server" name="compile" value="server" checked />
                     <label for="compile-server">Server</label>
                 </div>
-                <!--div class="radio-option">
+                <div class="radio-option">
                     <input type="radio" id="compile-browser" name="compile" value="browser" />
                     <label for="compile-browser">Browser</label>
-                </div-->
-            </div>
+                </div>
+            </div-->
 
             <button class="button">
                 <span class="material-icons">picture_as_pdf</span>
@@ -262,7 +268,7 @@
             </button>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+	</script>
         <script>
             let selectedPages = [];  // Array to hold page paths
             let pageContents = {};   // Holds fetched content for each path
@@ -303,7 +309,12 @@
                 });
 
                 addPage();  // Start with one page entry
-                flatpickr("#date", { dateFormat: "d-m-Y" });
+
+		// Initialize Flatpickr for the date input field
+		flatpickr("#date", {
+		    dateFormat: "d-m-Y",  // Format: dd-mm-yyyy
+		});
+
             };
 
             // Adds a new page entry with gray styling
@@ -382,32 +393,42 @@
             }
 
             // Fetch content for all selected pages
-            function fetchWikiContents(event) {
-                event.preventDefault();
+	    function fetchWikiContents(event) {
+		event.preventDefault();
 
-                const wikiUrl = document.getElementById('wiki-url').value.trim();
-                const accessToken = document.getElementById('access-token').value;
+		const wikiUrl = document.getElementById('wiki-url').value.trim();
+		const email = document.getElementById('email').value;
+		const password = document.getElementById('password').value;
 
-                if (!wikiUrl || !accessToken) {
-                    alert("Please enter both the Wiki URL and Access Token.");
-                    return;
-                }
+		if (!wikiUrl || !email || !password) {
+		    alert("Please enter the Wiki URL, Email, and Password.");
+		    return;
+		}
 
-                const urls = selectedPages.map(path => `${wikiUrl}/${path}`);
-                fetch('/fetch', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ urls, token: accessToken })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    selectedPages.forEach((path, index) => {
-                        pageContents[path] = data[index]?.content || "Content not available";
-                    });
-                    loadMarkdownContent(0);
-                })
-                .catch(error => console.error('Error fetching content:', error));
-            }
+		const urls = selectedPages.map(path => `${wikiUrl}/${path}`);
+		fetch('/fetch', {
+		    method: 'POST',
+		    headers: { 'Content-Type': 'application/json' },
+		    body: JSON.stringify({ urls, email, password })
+		})
+		.then(response => response.json())
+		.then(data => {
+		    selectedPages.forEach((path, index) => {
+			pageContents[path] = data[index]?.content || "Content not available";
+		    });
+		    loadMarkdownContent(0);
+
+		    // Automatically switch to the Markdown tab
+		    const tabs = document.querySelectorAll('.tab');
+		    const contents = document.querySelectorAll('.tab-content');
+		    tabs.forEach(t => t.classList.remove('active'));
+		    contents.forEach(content => content.classList.remove('active'));
+
+		    tabs[1].classList.add('active');       // Markdown tab
+		    contents[1].classList.add('active');   // Markdown content
+		})
+		.catch(error => console.error('Error fetching content:', error));
+	    }
 
             // Load Markdown content based on page selection
             function loadMarkdownContent(index) {

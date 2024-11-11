@@ -82,20 +82,45 @@ def how_to_get_access_token():
 @app.route('/fetch', methods=['POST'])
 def fetch_content():
     urls = request.json.get('urls', [])
-    jwt_token = request.json.get('token')
+    email = request.json.get('email')
+    password = request.json.get('password')
     
     if not urls:
         return jsonify({'error': 'No URLs provided'}), 400
-    if not jwt_token:
-        return jsonify({'error': 'No JWT token provided'}), 400
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required'}), 400
     
-    # Parse each URL to get paths and locales
+    # Step 1: Authenticate to get JWT token
+    auth_url = "https://rocket-team.epfl.ch/graphql"
+    auth_query = {
+        'query': """
+            mutation {
+              authentication {
+                login(
+                  username: "%s",
+                  password: "%s",
+                  strategy: "local"
+                ) {
+                  jwt
+                }
+              }
+            }
+        """ % (email, password)
+    }
+    
+    auth_response = requests.post(auth_url, json=auth_query)
+    if auth_response.status_code != 200 or 'errors' in auth_response.json():
+        return jsonify({'error': 'Authentication failed'}), 401
+    
+    jwt_token = auth_response.json()['data']['authentication']['login']['jwt']
+    
+    # Step 2: Fetch content with JWT token
     parsed_data = parse_rocket_urls(urls)
     paths = [page.path for page in parsed_data]
     locales = [page.locale for page in parsed_data]
-
+    
     try:
-        content_data = fetch_wiki_contents(paths, locales, "https://rocket-team.epfl.ch/graphql", jwt_token)
+        content_data = fetch_wiki_contents(paths, locales, auth_url, jwt_token)
         return jsonify(content_data)
     except Exception as e:
         return jsonify({'error': f"Failed to fetch content: {str(e)}"}), 500
