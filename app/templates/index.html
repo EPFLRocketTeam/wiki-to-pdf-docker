@@ -99,26 +99,6 @@
             border-radius: 4px;
             font-size: 16px;
         }
-        /* Radio button styling */
-        .radio-group {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            margin: 8px 0;
-        }
-        .radio-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        input[type="radio"] {
-            margin: 0;
-        }
-        .radio-label {
-            font-weight: 500;
-            margin-bottom: 8px;
-            display: block;
-        }
         /* Page entry styling */
         .page-entry {
             background-color: #f8f9fa;
@@ -127,181 +107,13 @@
             margin-bottom: 16px;
             position: relative;
         }
-        .page-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-        }
-        .material-icons {
-            font-size: 20px;
-        }
-        /* Error message styling */
-        .error-message {
-            color: #d32f2f;
-            font-size: 14px;
-            margin-top: 4px;
-        }
         /* Readonly input styling */
         input[readonly] {
-            background-color: #f5f5f5;
+            background-color: #e9ecef;
+            color: #495057;
             cursor: not-allowed;
         }
-        /* Code display styling */
-        .code-display {
-            background: #f0f0f0;
-            padding: 20px;
-            border-radius: 4px;
-            margin: 20px 0;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
     </style>
-    <script>
-        window.onload = function() {
-            const tabs = document.querySelectorAll('.tab');
-            const contents = document.querySelectorAll('.tab-content');
-            tabs.forEach((tab, index) => {
-                tab.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    contents.forEach(content => content.classList.remove('active'));
-                    tab.classList.add('active');
-                    contents[index].classList.add('active');
-                });
-            });
-
-            addPage();
-            updateLoginFields();
-            document.getElementById('login-type').addEventListener('change', updateLoginFields);
-        };
-
-        function updateLoginFields() {
-            const loginType = document.getElementById('login-type').value;
-            const tokenField = document.getElementById('token-field');
-            const credentialsField = document.getElementById('credentials-field');
-            if (loginType === 'token') {
-                tokenField.style.display = 'block';
-                credentialsField.style.display = 'none';
-            } else {
-                tokenField.style.display = 'none';
-                credentialsField.style.display = 'block';
-            }
-        }
-
-	let selectedPages = []; // Array to hold page paths
-
-	// Modify addPage to update selectedPages and selectors
-	function addPage() {
-	    const pagesDiv = document.getElementById('pages');
-	    const pageIndex = pagesDiv.children.length + 1;
-	    const newPage = document.createElement('div');
-	    newPage.classList.add('page-entry');
-	    newPage.innerHTML = `
-		<label>Full Page URL:</label>
-		<input type="text" name="full-url-${pageIndex}" class="full-url-input" 
-		       oninput="updatePagePath(this)" 
-		       placeholder="e.g., https://rocket-team.epfl.ch/en/management" required />
-		<label>Extracted Page Path:</label>
-		<input type="text" name="page-path-${pageIndex}" class="page-path-input" readonly />
-		<label>Locale:</label>
-		<select name="locale-${pageIndex}" class="locale-select">
-		    <option value="en">EN</option>
-		    <option value="fr">FR</option>
-		    <option value="de">DE</option>
-		    <option value="it">IT</option>
-		</select>
-		<div class="page-actions">
-		    <button type="button" onclick="removePage(this, ${pageIndex})" class="button secondary">
-			<span class="material-icons"></span>
-			Don't Export This Page
-		    </button>
-		</div>
-	    `;
-	    pagesDiv.appendChild(newPage);
-
-	    // Add placeholder path for the new page and update selectors
-	    selectedPages.push(""); // Placeholder for now
-	    updatePageSelectors();
-	}
-
-	// Update page path and selectedPages
-	function updatePagePath(input) {
-	    const pageEntry = input.closest('.page-entry');
-	    const pathInput = pageEntry.querySelector('.page-path-input');
-	    const localeSelect = pageEntry.querySelector('.locale-select');
-	    const wikiUrl = document.getElementById('wiki-url').value.trim();
-
-	    if (!wikiUrl) {
-		pathInput.value = 'Please enter Wiki URL first';
-		return;
-	    }
-
-	    try {
-		const fullUrl = input.value.trim();
-		if (!fullUrl) {
-		    pathInput.value = '';
-		    rebuildSelectedPages(); // Update selectedPages based on current DOM
-		    updatePageSelectors();
-		    return;
-		}
-
-		const baseUrl = wikiUrl.replace(/\/+$/, '');
-		if (!fullUrl.startsWith(baseUrl)) {
-		    pathInput.value = 'URL must start with Wiki URL';
-		    return;
-		}
-
-		let pagePath = fullUrl.substring(baseUrl.length).replace(/^\/+/, '').replace(/\/+$/, '');
-		
-		// Check for locale in the first segment
-		const pathSegments = pagePath.split('/');
-		const firstSegment = pathSegments[0].toLowerCase();
-		const validLocales = ['en', 'fr', 'de', 'it'];
-		
-		if (validLocales.includes(firstSegment)) {
-		    localeSelect.value = firstSegment; // Set the locale dropdown
-		    pagePath = pathSegments.slice(1).join('/'); // Remove locale from path
-		}
-		
-		pathInput.value = pagePath;
-		rebuildSelectedPages(); // Refresh selectedPages from current page-path-inputs
-		updatePageSelectors();
-	    } catch (error) {
-		pathInput.value = 'Invalid URL format';
-	    }
-	}
-
-	function removePage(button) {
-	    const pagesDiv = document.getElementById('pages');
-	    if (pagesDiv.children.length > 1) {
-		button.closest('.page-entry').remove();
-		rebuildSelectedPages(); // Rebuild selectedPages after removal
-		updatePageSelectors();
-	    }
-	}
-
-	// Helper function to rebuild selectedPages based on the current DOM
-	function rebuildSelectedPages() {
-	    selectedPages = Array.from(document.querySelectorAll('.page-path-input'))
-				 .map(input => input.value);
-	}
-
-	// Update page selectors on tabs 2, 3, and 4
-	function updatePageSelectors() {
-	    const selectors = document.querySelectorAll('#markdown-page-selector, #document-code-selector, #pdf-selector');
-	    
-	    selectors.forEach(selector => {
-		selector.innerHTML = ''; // Clear existing options
-		selectedPages.forEach((pagePath, index) => {
-		    const option = document.createElement('option');
-		    option.value = index;
-		    // Label format: "Page N: path/to/page" or just "Page N" if path is empty
-		    option.textContent = `Page ${index + 1}${pagePath ? `: ${pagePath}` : ''}`;
-		    selector.appendChild(option);
-		});
-	    });
-	}
-
-    </script>
 </head>
 <body>
     <div class="container">
@@ -316,33 +128,19 @@
         <!-- Tab Content -->
         <!-- Tab 1: Input Settings -->
         <div class="tab-content active">
-            <form id="settings-form">
+            <form id="settings-form" onsubmit="fetchWikiContents(event)">
                 <label for="wiki-url">Wiki URL:</label>
                 <input type="text" id="wiki-url" name="wiki-url" required placeholder="e.g., https://rocket-team.epfl.ch" />
 
-                <!--label for="login-type">Login Method:</label>
-                <select id="login-type" name="login-type">
-                    <option value="token">Access Token</option>
-                    <option value="credentials">Username & Password</option>
-                </select-->
-
                 <div id="token-field">
-		    <label for="access-token">
-		    Access Token 
-		    <a href="/how-to-get-access-token" target="_blank" style="font-size: 14px; color: #3f51b5; text-decoration: underline; margin-left: 5px;">
-		    How to obtain access token
-		    </a>
-                    <input type="text" id="access-token" name="access-token" />
-</label>
-
+                    <label for="access-token">
+                        Access Token 
+                        <a href="/how-to-get-access-token" target="_blank" style="font-size: 14px; color: #3f51b5; text-decoration: underline; margin-left: 5px;">
+                        How to obtain access token
+                        </a>
+                        <input type="text" id="access-token" name="access-token" required />
+                    </label>
                 </div>
-
-                <!--div id="credentials-field" style="display:none;">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" />
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" />
-                </div-->
 
                 <div id="pages">
                     <h3>Pages to Export:</h3>
@@ -364,54 +162,12 @@
         <!-- Tab 2: Markdown Display -->
         <div class="tab-content">
             <h2>Markdown Content</h2>
-	    <!-- Selector for Pages -->
-	    <label for="markdown-page-selector">Select Page:</label>
-	    <select id="markdown-page-selector" onchange="loadMarkdownContent(this.value)">
-	    <!-- Options will be populated dynamically -->
-	    </select>
+            <label for="markdown-page-selector">Select Page:</label>
+            <select id="markdown-page-selector" onchange="loadMarkdownContent(this.value)">
+                <!-- Options will be populated dynamically -->
+            </select>
 
             <div class="code-display" id="markdown-content"></div>
-
-            <h3>Front Page Settings</h3>
-            <label for="author">Author:</label>
-            <input type="text" id="author" name="author" placeholder="Author name" />
-
-            <label for="date">Date:</label>
-	    <input type="text" id="date" name="date" placeholder="dd-mm-yyyy" required>
-
-            <label for="title">Title:</label>
-            <input type="text" id="title" name="title" placeholder="Document Title" />
-
-            <label for="document-id">Document ID:</label>
-            <input type="text" id="document-id" name="document-id" placeholder="Unique Document ID" />
-
-            <h3>Document Formatting Options</h3>
-            <label for="markup">Markup Language:</label>
-            <select id="markup" name="markup">
-                <option value="latex">LaTeX</option>
-                <option value="typst" disabled>Typst</option>
-                <option value="quarto" disabled>Quarto</option>
-            </select>
-
-            <label for="lua-filter">Lua Filter:</label>
-            <select id="lua-filter" name="lua-filter">
-                <option value="epfl">EPFL Rocket Team</option>
-                <option value="default" disabled>Default</option>
-            </select>
-
-            <label for="template">Template:</label>
-            <select id="template" name="template">
-                <option value="epfl-space-race">EPFL Rocket Team - Space Race</option>
-                <option value="epfl-space-race">EPFL Rocket Team - Competition</option>
-                <option value="epfl-space-race">EPFL Rocket Team - Icarus</option>
-                <option value="epfl-space-race">EPFL Rocket Team - Hyperion</option>
-                <option value="default" disabled>Default</option>
-            </select>
-
-            <button class="button">
-                <span class="material-icons">code</span>
-                Convert to Document Code
-            </button>
         </div>
 
         <!-- Tab 3: Document Code -->
@@ -457,14 +213,154 @@
                 Download PDF
             </button>
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        // Initialize flatpickr for the date input field
-        flatpickr("#date", {
-            dateFormat: "d-m-Y",  // Format: dd-mm-yyyy
-        });
-    </script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script>
+            let selectedPages = [];  // Array to hold page paths
+            let pageContents = {};   // Holds fetched content for each path
+
+            window.onload = function() {
+                const tabs = document.querySelectorAll('.tab');
+                const contents = document.querySelectorAll('.tab-content');
+                
+                tabs.forEach((tab, index) => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        contents.forEach(content => content.classList.remove('active'));
+                        tab.classList.add('active');
+                        contents[index].classList.add('active');
+                    });
+                });
+
+                addPage();  // Start with one page entry
+                flatpickr("#date", { dateFormat: "d-m-Y" });
+            };
+
+            // Adds a new page entry with gray styling
+            function addPage() {
+                const pagesDiv = document.getElementById('pages');
+                const pageIndex = pagesDiv.children.length + 1;
+                const newPage = document.createElement('div');
+                newPage.classList.add('page-entry');
+                newPage.innerHTML = `
+                    <label>Full Page URL:</label>
+                    <input type="text" class="full-url-input" oninput="updatePagePath(this)" placeholder="e.g., https://rocket-team.epfl.ch/en/management" required />
+                    <label>Extracted Page Path:</label>
+                    <input type="text" class="page-path-input" readonly />
+                    <label>Locale:</label>
+                    <select class="locale-select">
+                        <option value="en">EN</option>
+                        <option value="fr">FR</option>
+                        <option value="de">DE</option>
+                        <option value="it">IT</option>
+                    </select>
+		    <div class="page-actions">
+			<button type="button" onclick="removePage(this, ${pageIndex})" class="button secondary">
+			    <span class="material-icons"></span>
+			    Don't Export This Page
+			</button>
+		    </div>
+                `;
+                pagesDiv.appendChild(newPage);
+
+                selectedPages.push("");  // Placeholder
+		updatePageSelectors();
+            }
+
+            // Updates page paths and handles locale extraction
+            function updatePagePath(input) {
+                const pageEntry = input.closest('.page-entry');
+                const pathInput = pageEntry.querySelector('.page-path-input');
+                const localeSelect = pageEntry.querySelector('.locale-select');
+                const wikiUrl = document.getElementById('wiki-url').value.trim();
+
+                if (!wikiUrl) {
+                    pathInput.value = 'Please enter Wiki URL first';
+                    return;
+                }
+
+                const fullUrl = input.value.trim();
+                const baseUrl = wikiUrl.replace(/\/+$/, '');
+                let pagePath = fullUrl.replace(baseUrl, '').replace(/^\/+/, '').replace(/\/+$/, '');
+
+                // Detect locale if it's the first segment
+                const pathSegments = pagePath.split('/');
+                const validLocales = ['en', 'fr', 'de', 'it'];
+                if (validLocales.includes(pathSegments[0])) {
+                    localeSelect.value = pathSegments[0];
+                    pagePath = pathSegments.slice(1).join('/');
+                }
+
+                pathInput.value = pagePath;
+                rebuildSelectedPages();
+		updatePageSelectors();
+            }
+
+	    function removePage(button) {
+		const pagesDiv = document.getElementById('pages');
+		if (pagesDiv.children.length > 1) {
+		    button.closest('.page-entry').remove();
+		    rebuildSelectedPages(); // Rebuild selectedPages after removal
+		    updatePageSelectors();
+		}
+	    }
+
+            // Helper function to rebuild selectedPages array
+            function rebuildSelectedPages() {
+                selectedPages = Array.from(document.querySelectorAll('.page-path-input'))
+                                     .map(input => input.value);
+            }
+
+            // Fetch content for all selected pages
+            function fetchWikiContents(event) {
+                event.preventDefault();
+
+                const wikiUrl = document.getElementById('wiki-url').value.trim();
+                const accessToken = document.getElementById('access-token').value;
+
+                if (!wikiUrl || !accessToken) {
+                    alert("Please enter both the Wiki URL and Access Token.");
+                    return;
+                }
+
+                const urls = selectedPages.map(path => `${wikiUrl}/${path}`);
+                fetch('/fetch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ urls, token: accessToken })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    selectedPages.forEach((path, index) => {
+                        pageContents[path] = data[index]?.content || "Content not available";
+                    });
+                    loadMarkdownContent(0);
+                })
+                .catch(error => console.error('Error fetching content:', error));
+            }
+
+            // Load Markdown content based on page selection
+            function loadMarkdownContent(index) {
+                const path = selectedPages[index];
+                document.getElementById('markdown-content').textContent = pageContents[path] || 'No content loaded';
+            }
+
+	    // Update page selectors on tabs 2, 3, and 4
+	    function updatePageSelectors() {
+		const selectors = document.querySelectorAll('#markdown-page-selector, #document-code-selector, #pdf-selector');
+		
+		selectors.forEach(selector => {
+		    selector.innerHTML = ''; // Clear existing options
+		    selectedPages.forEach((pagePath, index) => {
+			const option = document.createElement('option');
+			option.value = index;
+			// Label format: "Page N: path/to/page" or just "Page N" if path is empty
+			option.textContent = `Page ${index + 1}${pagePath ? `: ${pagePath}` : ''}`;
+			selector.appendChild(option);
+		    });
+		});
+	    }
+        </script>
+    </div>
 </body>
 </html>
