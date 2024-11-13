@@ -3,8 +3,12 @@ from datetime import datetime
 from urllib.parse import urlparse
 import requests
 import os
+from markdown_converter import MarkdownConverter, ConversionError
+from page_data_manager import PageDataManager, PageMetadata
 
 app = Flask(__name__)
+converter = MarkdownConverter()
+page_manager = PageDataManager()
 
 # Ensure JWT token is stored securely
 #JWT_TOKEN = os.getenv("JWT_TOKEN")
@@ -125,6 +129,38 @@ def fetch_content():
         return jsonify(content_data)
     except Exception as e:
         return jsonify({'error': f"Failed to fetch content: {str(e)}"}), 500
+
+@app.route('/convert', methods=['POST'])
+def convert_markdown():
+    try:
+        data = request.json
+        markdown_content = data.get('markdown')
+        template = data.get('template', 'default')
+        metadata = {
+            'author': data.get('author', ''),
+            'date': data.get('date', datetime.now().strftime('%Y-%m-%d')),
+            'title': data.get('title', ''),
+            'documentid': data.get('documentId', '')
+        }
+        
+        if not markdown_content:
+            return jsonify({'error': 'No markdown content provided'}), 400
+            
+        latex_content = converter.convert_to_latex(
+            markdown_content,
+            template=template,
+            metadata=metadata
+        )
+        
+        return jsonify({
+            'latex': latex_content,
+            'status': 'success'
+        })
+        
+    except ConversionError as e:
+        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
