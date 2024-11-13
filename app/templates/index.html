@@ -121,6 +121,11 @@
             border: 1px solid #ddd;
             margin: 20px 0;
         }
+        #document-code {
+            height: 500px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -273,6 +278,7 @@
             let selectedPages = [];  // Array to hold page paths
             let pageContents = {};   // Holds fetched content for each path
             let monacoEditor = null;
+	    let latexEditor = null;
 	    let pageMetadata = {
 		    // Format will be:
 		    // pagePath: {
@@ -298,6 +304,21 @@
                     scrollBeyondLastLine: false,
                     wordWrap: 'on'
                 });
+		const latexContainer = document.getElementById('document-code');
+		latexEditor = monaco.editor.create(latexContainer, {
+		  value: '',
+		  language: 'latex',
+		  theme: 'vs-dark',
+		  automaticLayout: true,
+		  folding: true,
+		  lineNumbers: 'on',
+		  minimap: {
+		    enabled: true
+		  },
+		  wordWrap: 'on',
+		  wrappingIndent: 'same',
+		  scrollBeyondLastLine: false
+		});
             });
 
             window.onload = function() {
@@ -314,7 +335,10 @@
                         // Trigger Monaco Editor layout update when switching to Markdown tab
                         if (index === 1 && monacoEditor) {
                             monacoEditor.layout();
-                        }
+			} else if (index === 2 && latexEditor) {
+			    latexEditor.layout()
+			}
+
                     });
                 });
 
@@ -572,8 +596,13 @@
 		    console.error(data.error);
 		  } else {
 		    // Update the Document Code tab with the generated LaTeX content
-		    const documentCodeElement = document.getElementById('document-code');
-		    documentCodeElement.textContent = data.latex;
+		    if (latexEditor) {
+		      latexEditor.setValue(data.latex);
+		    } else {
+		      const documentCodeElement = document.getElementById('document-code');
+		      documentCodeElement.textContent = data.latex;
+		    }
+
 
 		    const tabs = document.querySelectorAll('.tab');
 		    const contents = document.querySelectorAll('.tab-content');
