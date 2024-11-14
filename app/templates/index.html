@@ -653,10 +653,8 @@
                     });
                 } else {
                 // Handle the error
-                response.json().then(data => {
-                    console.error('Error generating PDF:', data.error, data.message);
-                    // Display an error message to the user
-                });
+                console.error("error generating pdf")
+                // Display an error message to the user
                 }
             })
             .catch(error => {
