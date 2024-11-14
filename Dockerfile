@@ -4,7 +4,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM ubuntu:24.04
 RUN \
   apt update && \
-  apt-get -y install texlive-full
+  apt-get -y install texlive-full python3 \
+  && pip install --no-cache-dir -r requirements.txt
 
 WORKDIR /app
 
