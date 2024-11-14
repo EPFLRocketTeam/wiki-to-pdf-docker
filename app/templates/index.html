@@ -636,12 +636,14 @@
             body: JSON.stringify({ latex_code: latexCode })
             })
             .then(response => {
-                console.log(response)
                 if (response.ok) {
                     // The PDF was generated successfully
                     // Display the PDF in the 4th tab
                     console.log("trying displayPdfPreview")
-                    displayPdfPreview(response);
+                    response.blob().then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        displayPdfPreview(url); // Pass the URL to the function
+                    });
                 } else {
                 // Handle the error
                 response.json().then(data => {
@@ -664,21 +666,20 @@
 	        }
 	    }
 
-        function displayPdfPreview(response) {
-            // Get the PDF preview element (iframe)
-            const pdfPreviewElement = document.getElementById('pdf-preview');
-
-            // Clear any existing content in the preview
-            pdfPreviewElement.innerHTML = '';
-
-            // Convert the binary response into a Blob
-            const blob = new Blob([response], { type: 'application/pdf' });
-
-            // Create an object URL for the Blob
-            const pdfUrl = URL.createObjectURL(blob);
+        function displayPdfPreview(url) {
+            const pdfPreviewElement = document.getElementById('pdf-preview')
+            const title = document.getElementById('title').value;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}.pdf`;
+            document.body.appendChild(a);
+            //a.click();
+            document.body.removeChild(a);
 
             // Set the iframe's src to the object URL
-            pdfPreviewElement.src = pdfUrl;
+            pdfPreviewElement.src = url;
+
+            //window.URL.revokeObjectURL(url);
 
             // Unselect other tabs
             const tabs = document.querySelectorAll('.tab');

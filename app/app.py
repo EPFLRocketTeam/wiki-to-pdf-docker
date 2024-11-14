@@ -167,6 +167,7 @@ def convert_markdown():
 @app.route('/generate-pdf', methods=['POST'])
 def generate_pdf():
     latex_code = request.json.get('latex_code')
+    title = request.json.get('title', 'document')
     
     # Save the LaTeX code to a temporary .tex file
     tex_file_path = '/tmp/document.tex'
@@ -188,7 +189,7 @@ def generate_pdf():
             "message": result.stderr.decode()
         }, 500
 
-    return send_file(pdf_file_path, mimetype='application/pdf')
+    return send_file(pdf_file_path, mimetype='application/pdf', as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
