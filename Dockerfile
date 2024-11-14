@@ -6,7 +6,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
   apt update && \
-  apt-get -y install texlive-full python3
+  apt-get -y install texlive-full python3 binutils
 
 
 # Copy application code
