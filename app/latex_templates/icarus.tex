@@ -38,7 +38,32 @@
 \usepackage{tcolorbox}
 
 \usepackage{lineno}
+\renewcommand\linenumberfont{\tiny\rmfamily\color{gray!70}} % Sets line numbers to 8pt font size
+%\setlength{\linenumbersep}{1cm} % Adjust spacing here (e.g., 10pt, 15pt for more spacing)
+\newcommand{\colora}{black}
+\newcommand{\colorb}{red}
+\newcommand{\colorc}{yellow!80!black}
+\newcommand{\colord}{green!80!black}
+\newcommand{\colore}{blue!80!black}
+%\newcounter{linecolor}
+%\renewcommand\makeLineNumber{%
+  %\stepcounter{linecolor}%
+  %\ifnum\value{linecolor}=1%
+    %\color{\colora}\thelinenumber
+  %\else\ifnum\value{linecolor}=2%
+    %\color{\colorb}\thelinenumber
+  %\else\ifnum\value{linecolor}=3%
+    %\color{\colorc}\thelinenumber
+  %\else\ifnum\value{linecolor}=4%
+    %\color{\colord}\thelinenumber
+  %\else\ifnum\value{linecolor}=5%
+    %\color{\colore}\thelinenumber
+    %\setcounter{linecolor}{0}%
+  %\fi\fi\fi\fi\fi
+  %\kern-1em%
+%}
 \linenumbers
+
 
 % FONT SETTINGS
 \renewcommand\familydefault{\sfdefault}
@@ -164,7 +189,7 @@
     \hspace*{-1.2cm}
     \parbox{\linewidth}{%
         \bfseries\fontsize{14}{18}\selectfont
-	$authors$
+	    \docauthor
         %NAME Surname - 33000 \\
         %NAME Surname - 33001
     }
