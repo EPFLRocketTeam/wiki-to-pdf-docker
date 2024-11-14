@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta property="og:title" content="Wiki.js to PDF converter">
+    <meta property="og:description" content="Webapp to convert wiki.js pages into pdf pages, with custom styling and options. It's built with Flask, a micro web framework written in Python.">
+    <meta property="og:image" content="{{ url_for('static', filename='images/wikitopdf-sharing-card.jpg', _external=True) }}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:type" content="website">
+
     <title>Wiki to PDF Converter</title>
     <!--script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs"></script-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
