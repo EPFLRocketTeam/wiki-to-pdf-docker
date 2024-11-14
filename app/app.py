@@ -1,8 +1,10 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
 from datetime import datetime
 from urllib.parse import urlparse
 import requests
 import os
+import io
+import subprocess
 from markdown_converter import MarkdownConverter, ConversionError
 from page_data_manager import PageDataManager, PageMetadata
 
@@ -161,6 +163,32 @@ def convert_markdown():
         return jsonify({'error': str(e)}), 500
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+@app.route('/generate-pdf', methods=['POST'])
+def generate_pdf():
+    latex_code = request.json.get('latex_code')
+    
+    # Save the LaTeX code to a temporary .tex file
+    tex_file_path = '/tmp/document.tex'
+    pdf_file_path = '/tmp/document.pdf'
+    
+    with open(tex_file_path, 'w') as f:
+        f.write(latex_code)
+    
+    # Compile the LaTeX file to PDF using lualatex with -shell-escape
+    result = subprocess.run([
+        'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
+    ], )#stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print(result.returncode)
+    
+    if result.returncode != 0:
+        # Handle compilation errors by returning the error message
+        return {
+            "error": "Failed to compile PDF",
+            "message": result.stderr.decode()
+        }, 500
+
+    return send_file(pdf_file_path, mimetype='application/pdf')
 
 if __name__ == '__main__':
     app.run(debug=True)

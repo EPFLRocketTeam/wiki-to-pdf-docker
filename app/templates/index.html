@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wiki to PDF Converter</title>
+    <!--script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs"></script-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
@@ -252,7 +253,7 @@
                 </div>
             </div-->
 
-            <button class="button">
+            <button id="compile-button" class="button">
                 <span class="material-icons">picture_as_pdf</span>
                 Compile PDF
             </button>
@@ -266,18 +267,17 @@
             <select id="pdf-selector" onchange="loadMarkdownContent(this.value)">
             </select>
 
-            <div id="pdf-preview" style="min-height: 400px; background: #f0f0f0; margin: 20px 0;"></div>
+            <iframe id="pdf-preview" width="100%" height="600px" style="border: none;"></iframe>
             <button class="button">
                 <span class="material-icons">download</span>
                 Download PDF
             </button>
         </div>
 
-	</script>
         <script>
-            let selectedPages = [];  // Array to hold page paths
-            let pageContents = {};   // Holds fetched content for each path
-            let monacoEditor = null;
+        let selectedPages = [];  // Array to hold page paths
+        let pageContents = {};   // Holds fetched content for each path
+        let monacoEditor = null;
 	    let latexEditor = null;
 	    let pageMetadata = {
 		    // Format will be:
@@ -619,6 +619,79 @@
 		  console.error('Error:', error);
 		});
 	    });
+
+        // Assume you have a reference to the "Compile PDF" button
+        const compileButton = document.getElementById('compile-button');
+
+        compileButton.addEventListener('click', () => {
+            // Get the LaTeX code from the code editor
+            const latexCode = getLatexCodeFromEditor();
+
+            // Make a POST request to the /generate-pdf endpoint
+            fetch('/generate-pdf', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+            body: JSON.stringify({ latex_code: latexCode })
+            })
+            .then(response => {
+                console.log(response)
+                if (response.ok) {
+                    // The PDF was generated successfully
+                    // Display the PDF in the 4th tab
+                    console.log("trying displayPdfPreview")
+                    displayPdfPreview(response);
+                } else {
+                // Handle the error
+                response.json().then(data => {
+                    console.error('Error generating PDF:', data.error, data.message);
+                    // Display an error message to the user
+                });
+                }
+            })
+            .catch(error => {
+                console.error('Error generating PDF:', error);
+                // Display an error message to the user
+            });
+        });
+
+        function getLatexCodeFromEditor() {
+            if (latexEditor) {
+		        return latexEditor.getValue();
+	        } else {
+		        return '';
+	        }
+	    }
+
+        function displayPdfPreview(response) {
+            // Get the PDF preview element (iframe)
+            const pdfPreviewElement = document.getElementById('pdf-preview');
+
+            // Clear any existing content in the preview
+            pdfPreviewElement.innerHTML = '';
+
+            // Convert the binary response into a Blob
+            const blob = new Blob([response], { type: 'application/pdf' });
+
+            // Create an object URL for the Blob
+            const pdfUrl = URL.createObjectURL(blob);
+
+            // Set the iframe's src to the object URL
+            pdfPreviewElement.src = pdfUrl;
+
+            // Unselect other tabs
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Switch to the Generated PDF tab
+            tabs[3].classList.add('active');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents[3].classList.add('active');
+
+        }
         </script>
     </div>
 </body>
