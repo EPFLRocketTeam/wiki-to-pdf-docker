@@ -455,7 +455,7 @@
 			    title: data[index]?.title || 'Untitled Document',
 			    date: new Date().toISOString().split('T')[0],
 			    documentId: "202X_P_SS_DOC",
-			    template: "default"
+			    template: "space-race"
 			};
 		    });
 		    loadMarkdownContent(0);
@@ -479,7 +479,7 @@
 		    title: '',
 		    date: new Date().toISOString().split('T')[0],
 		    documentId: '',
-		    template: 'default'
+		    template: 'space-race'
 		};
 	    }
 
@@ -491,7 +491,7 @@
 			title: '',
 			date: new Date().toISOString().split('T')[0],
 			documentId: '',
-			template: 'default'
+			template: 'space-race'
 		    };
 		}
 		pageMetadata[pagePath][field] = value;
@@ -524,7 +524,7 @@
 		document.getElementById("date").value = metadata.date || "";
 		document.getElementById("title").value = metadata.title || "";
 		document.getElementById("document-id").value = metadata.documentId || "";
-		document.getElementById("template").value = metadata.template || "default";
+		document.getElementById("template").value = metadata.template || "space-race";
 	    }
 
             // Load Markdown content based on page selection
