@@ -1,4 +1,9 @@
 FROM python:3.9-slim
+FROM ubuntu:24.04
+
+RUN \
+  apt update && \
+  apt-get -y install texlive-full
 
 WORKDIR /app
 

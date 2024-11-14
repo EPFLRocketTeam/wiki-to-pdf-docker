@@ -10,3 +10,13 @@ services:
       - FLASK_APP=app.py
     network_mode: "host"  # Use host's network configuration
     restart: unless-stopped
+    networks:
+      - default
+      - nginx-proxy
+
+networks:
+    nginx-proxy:
+        external:
+            name: nginx-proxy
+
+
