@@ -34,6 +34,7 @@ class MarkdownConverter:
                 with open(metadata_file, "w") as f:
                     for key, value in metadata.items():
                         f.write(f"{key}: {value}\n")
+                    f.write(f"assetsDirectory: {os.path.dirname(os.path.realpath(__file__))}/latex_templates/template_images\n")
             
             # Set up conversion options
             extra_args = [
@@ -44,7 +45,8 @@ class MarkdownConverter:
             
             # Add template if specified
             if template != "default":
-                template_path = f"templates/{template}.latex"
+                template_path = f"{os.path.dirname(os.path.realpath(__file__))}/latex_templates/{template}.tex"
+                print(template_path, os.path.exists(template_path))
                 if os.path.exists(template_path):
                     extra_args.extend(["--template", template_path])
             

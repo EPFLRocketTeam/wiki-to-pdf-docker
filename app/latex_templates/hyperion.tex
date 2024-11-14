@@ -1,0 +1,212 @@
+\documentclass[12pt]{article}
+
+% PACKAGE IMPORTS
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{csquotes}
+\usepackage{enumitem}
+\usepackage[font=small,skip=0pt]{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+\usepackage{calc}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{etoolbox}
+\usepackage{wrapfig}
+\usepackage{ragged2e}
+\usepackage{textcomp, gensymb}
+\usepackage{pdflscape}
+\usepackage{pdfpages}
+\usepackage{tikz}
+\usepackage{geometry}
+\usepackage{lastpage}
+\usepackage[scaled]{helvet}
+\usepackage{soul}
+\usepackage[useregional]{datetime2}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{fancyvrb}
+\usepackage{minted}
+\usepackage{tcolorbox}
+
+\usepackage{lineno}
+\linenumbers
+
+% FONT SETTINGS
+\renewcommand\familydefault{\sfdefault}
+
+% DEFINE COLORS
+\definecolor{ertred}{RGB}{226,12,24}
+\definecolor{issuccess}{RGB}{0,115,10}
+\definecolor{isdanger}{RGB}{200,10,10}
+
+% MARGINS
+\geometry{
+    a4paper,
+    inner=20mm,
+    outer=20mm,
+    top=26mm,
+    bottom=30mm,
+    footskip=10mm,
+    headsep=13mm
+}
+
+% TITLE - INTER LETTER SPACING
+\sodef\an{}{.1em}{0.1em}{0.1em}
+
+% FRONT PAGE BACKGROUND IMAGE
+\newcommand\BackgroundPic{
+    \put(0,0){
+        \parbox[b][\paperheight]{\paperwidth}{
+            \vfill
+            \centering
+            \includegraphics[width=\paperwidth,height=\paperheight]{/home/jordan/wiki-to-pdf-webapp/src/png/\project_title-page.png}
+            \vfill
+        }
+    }
+}
+
+% Shaded environment
+\newenvironment{Shaded}{%
+  \begin{center}
+  \color{gray!30}
+  \begin{minipage}{0.95\textwidth}
+}{%
+  \end{minipage}
+  \end{center}
+}
+
+% Verbatim environment for Highlighting
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+
+% Correct order of tables after \paragraph or \subparagraph
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+
+% Prevent overfull lines
+\setlength{\emergencystretch}{3em} 
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\setcounter{secnumdepth}{-\maxdimen}
+
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{}
+\urlstyle{same}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+% Handle pandoc's title and doc_id variables
+\newcommand{\doctitle}{$title$}
+\newcommand{\docid}{$documentId$}
+\newcommand{\docdate}{$date$}
+\newcommand{\docauthor}{$author}
+
+% Check if variables are empty and provide defaults
+\ifdefempty{\doctitle}{\def\doctitle{GENERIC ERT OVERLEAF TEMPLATE}}{}
+\ifdefempty{\docid}{\def\docid{202X\_P\_SS\_DOC}}{}
+\ifdefempty{\docdate}{\def\docdate{\today}}{}
+\ifdefempty{\docauthor}{\def\docauthor{Pingu}}{}
+
+\author{\docauthor}
+\date{\docdate}
+
+\begin{document}
+
+\AddToShipoutPicture*{\BackgroundPic}
+\ClearShipoutPicture
+
+% HEADER AND FOOTER
+\let\oldheadrule\headrule
+\renewcommand{\headrule}{\color{ertred}\oldheadrule}
+\renewcommand{\headrulewidth}{1.5pt}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{ertred}\leaders\hrule height \footrulewidth\hfill}}
+\renewcommand{\footrulewidth}{1.5pt}
+\setlength\headheight{29pt}
+
+% HEADER OPTIONS
+\pagestyle{fancy}
+\fancyhead[C]{\rule[-2ex]{0pt}{2ex} \bf{  \fontsize{12}{5} \selectfont \docid}}
+\lhead{}
+\lhead{\includegraphics[height=1.5cm]{/home/jordan/wiki-to-pdf-webapp/src/png/ert_logo_small.png}\vspace{-4mm}}
+\rhead{\includegraphics[height=1.5cm]{/home/jordan/wiki-to-pdf-webapp/src/png/\project_patch.png}\vspace{-4mm}}
+
+% FOOTER OPTIONS
+\cfoot{}
+\fancyfoot[R]{\bf{\thepage/\pageref{LastPage}}}
+\fancyfoot[L]{\rule[-2ex]{0pt}{2ex}\bf{EPFL ROCKET TEAM}}
+
+% TITLE PAGE
+\begin{titlepage}
+    \vspace*{-2.40cm}
+    \noindent
+    \hspace*{-1.2cm}
+    \parbox{\linewidth}{%
+        \bfseries\fontsize{34}{38}\selectfont
+        \doctitle\\
+    }
+    \newline
+    \hspace*{-1.2cm}
+    \parbox{\linewidth}{%
+        \bfseries\fontsize{14}{18}\selectfont
+	$authors$
+        %NAME Surname - 33000 \\
+        %NAME Surname - 33001
+    }
+    
+    % ADDITIONAL TITLE PAGE DETAILS
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[anchor=south east,inner sep=39mm] at (current page.south east) {
+            \parbox[b][-2.37cm][t]{15cm}{
+                \raggedleft
+                \fontsize{12}{12} \selectfont \normalfont ERT-123 Course Name
+            }
+        };
+    \end{tikzpicture}
+
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[anchor=south east,inner sep=39mm] at (current page.south east) {
+            \parbox[b][-0.8cm][t]{15cm}{
+                \raggedleft
+                \fontsize{12}{12} \selectfont \normalfont Date: \today
+            }
+        };
+    \end{tikzpicture}
+
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[anchor=south east,inner sep=39mm] at (current page.south east) {
+            \parbox[b][-1.6cm][t]{15cm}{
+                \raggedleft
+                \fontsize{12}{12} \selectfont \normalfont Doc ID: \docid
+            }
+        };
+    \end{tikzpicture}
+
+\end{titlepage}
+
+% TABLE OF CONTENTS
+\tableofcontents
+\newpage
+
+% PAGE NUMBERING
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% Rest of the document
+$body$
+
+\end{document}
