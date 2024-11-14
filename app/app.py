@@ -140,7 +140,7 @@ def convert_markdown():
             'author': data.get('author', ''),
             'date': data.get('date', datetime.now().strftime('%Y-%m-%d')),
             'title': data.get('title', ''),
-            'documentid': data.get('documentId', '')
+            'documentId': data.get('documentId', '')
         }
         
         if not markdown_content:
