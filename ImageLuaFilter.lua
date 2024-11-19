@@ -11,7 +11,7 @@ function Image(elem)
   end
 
   -- Prepend the fixed base path
-  src = "/app/ert_wiki" .. src
+  src = "/home/jordan/ert_wiki/" .. src
 
   -- Add width and height to attributes if they exist
   if width then
