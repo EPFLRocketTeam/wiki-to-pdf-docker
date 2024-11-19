@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 # Copy application code
 COPY ./app .
 COPY gunicorn.conf.py .
+COPY ./ert_wiki ./ert_wiki
+COPY ImageLuaFilter.lua .
 
 # Expose port 8000 (Gunicorn's default)
 EXPOSE 8000

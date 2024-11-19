@@ -40,7 +40,8 @@ class MarkdownConverter:
             extra_args = [
                 "--standalone",
                 "--from", "markdown",
-                "--to", "latex"
+                "--to", "latex",
+                "--lua-filter", "/app/ImageLuaFilter.lua"
             ]
             
             # Add template if specified
