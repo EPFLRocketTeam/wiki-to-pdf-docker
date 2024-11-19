@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from datetime import datetime
 from urllib.parse import urlparse
 import requests
+import re
 import os
 import io
 import subprocess
@@ -19,6 +20,58 @@ class WikiPage:
     def __init__(self, path, locale):
         self.path = path
         self.locale = locale
+def remove_backtick_content(text):
+    """
+    Removes content enclosed within triple backticks, including the backticks themselves.
+    """
+    # Pattern to match content within triple backticks
+    pattern = r'```.*?```'
+    # Remove the content
+    cleaned_text = re.sub(pattern, '', text, flags=re.DOTALL)
+    return cleaned_text
+
+def remove_links_list_tag(text):
+    """
+    Removes the tag '{.links-list}' from the text.
+    """
+    pattern = r'\{\.links-list\}'
+    cleaned_text = re.sub(pattern, '', text)
+    return cleaned_text
+
+def add_blank_line_after_titles(text):
+    """
+    Adds a blank line after each title starting with '##', except for '## table {.tabset}',
+    and only if the title is immediately followed by a specific table pattern.
+    """
+    lines = text.split('\n')
+    result_lines = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        result_lines.append(line)
+        
+        # Check if the line is a title starting with '##'
+        if re.match(r'^##\s', line):
+            # Skip '## table {.tabset}' titles
+            if not re.match(r'^##\s+table\s+\{\.tabset\}', line):
+                # Check if the next two lines exist
+                if i + 2 < len(lines):
+                    next_line = lines[i + 1]
+                    next_next_line = lines[i + 2]
+                    # Check for the specific table pattern
+                    if re.match(r'^\|.*\|$', next_line.strip()) and re.match(r'^\|[-:]+.*\|$', next_next_line.strip()):
+                        # Add a blank line after the title
+                        result_lines.append('')
+        i += 1
+    # Reconstruct the text
+    updated_text = '\n'.join(result_lines)
+    return updated_text
+
+def filter_text(text):
+    text_without_diagrams= remove_backtick_content(text)
+    text_without_tags=remove_links_list_tag(text_without_diagrams)
+    text_correct_formated_tabs = add_blank_line_after_titles(text_without_tags)
+    return text_correct_formated_tabs
 
 def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) -> list:
     """Fetch content from Wiki for multiple pages using GraphQL."""
@@ -52,6 +105,7 @@ def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) ->
                 contents.append(data['data']['pages']['singleByPath'])
         else:
             contents.append({'path': path, 'error': f'HTTP Error: {response.status_code}'})
+    
     
     return contents
 
@@ -137,6 +191,7 @@ def convert_markdown():
     try:
         data = request.json
         markdown_content = data.get('markdown')
+        filtered_markdown_content= filter_text(markdown_content) #filter the content to convert it properly to latex
         template = data.get('template', 'default')
         metadata = {
             'author': data.get('author', ''),
@@ -149,7 +204,7 @@ def convert_markdown():
             return jsonify({'error': 'No markdown content provided'}), 400
             
         latex_content = converter.convert_to_latex(
-            markdown_content,
+            filtered_markdown_content,
             template=template,
             metadata=metadata
         )
