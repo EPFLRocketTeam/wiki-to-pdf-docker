@@ -68,8 +68,8 @@ def add_blank_line_after_titles(text):
     return updated_text
 
 def filter_text(text):
-    text_without_diagrams= remove_backtick_content(text)
-    text_without_tags=remove_links_list_tag(text_without_diagrams)
+    #text_without_diagrams= remove_backtick_content(text)
+    text_without_tags=remove_links_list_tag(text)
     text_correct_formated_tabs = add_blank_line_after_titles(text_without_tags)
     return text_correct_formated_tabs
 
