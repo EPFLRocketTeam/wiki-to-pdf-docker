@@ -42,7 +42,7 @@ end
 local function convert_svg_to_pdf(svg_content, output_pdf)
     local temp_svg = os.tmpname() .. ".svg"
     write_file(temp_svg, svg_content)
-    os.execute("drawio --export --format pdf --output " .. output_pdf .. " " .. temp_svg .. " > /dev/null 2>&1")
+    os.execute("xvfb-run drawio --no-sandbox --export --format pdf --output " .. output_pdf .. " " .. temp_svg .. " > /dev/null 2>&1")
     os.remove(temp_svg)
 end
 
@@ -89,7 +89,7 @@ function Image(elem)
   end
 
   -- Prepend the fixed base path
-  src = "/home/jordan/ert_wiki/" .. src
+  src = "/app/ert_wiki/" .. src
 
   -- Add width and height to attributes if they exist
   if width then

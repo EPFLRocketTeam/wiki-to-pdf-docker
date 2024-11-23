@@ -41,7 +41,7 @@ class MarkdownConverter:
                 "--standalone",
                 "--from", "markdown",
                 "--to", "latex",
-                "--lua-filter", "/home/jordan/wiki-to-pdf-docker/ImageLuaFilter.lua"
+                "--lua-filter", "/app/ImageLuaFilter.lua"
             ]
             
             # Add template if specified
