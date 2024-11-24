@@ -275,10 +275,10 @@
             </select>
 
             <iframe id="pdf-preview" width="100%" height="600px" style="border: none;"></iframe>
-            <button id="download-button" class="button">
+            <!--button id="download-button" class="button">
                 <span class="material-icons">download</span>
                 Download PDF
-            </button>
+            </button-->
         </div>
 
         <script>
@@ -653,7 +653,7 @@
                     });
                 } else {
                 // Handle the error
-                console.error("error generating pdf")
+                console.error(response.error)
                 // Display an error message to the user
                 }
             })
@@ -674,17 +674,6 @@
         function displayPdfPreview(url) {
             const pdfPreviewElement = document.getElementById('pdf-preview')
 
-            const downloadButton = document.getElementById('download-button');
-
-            downloadButton.addEventListener('click', () => {
-                const title = document.getElementById('title').value;
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${title}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            })
 
             // Set the iframe's src to the object URL
             pdfPreviewElement.src = url;

@@ -1,10 +1,16 @@
-FROM python:3.9-bullseye
+FROM python:3.9-slim
 
 # Set working directory
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
+    texlive-latex-recommended \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    texlive-science \
+    texlive-latex-extra \
+    texlive-bibtex-extra \
     texlive-full \
     python3 \
     binutils \

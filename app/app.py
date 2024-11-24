@@ -232,6 +232,8 @@ def generate_pdf():
         f.write(latex_code)
     
     # Compile the LaTeX file to PDF using lualatex with -shell-escape
+    subprocess.run(['lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path], )#stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
     result = subprocess.run([
         'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
     ], )#stdout=subprocess.PIPE, stderr=subprocess.PIPE)
