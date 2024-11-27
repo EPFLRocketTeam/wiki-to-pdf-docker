@@ -27,6 +27,7 @@
             min-height: 100vh;
             background-color: #f5f5f5;
             margin: 0;
+	    padding: 50px;
         }
         .container {
             width: 100%;
@@ -153,20 +154,25 @@
                 <label for="wiki-url">Wiki URL:</label>
                 <input type="text" id="wiki-url" name="wiki-url" required placeholder="e.g., https://rocket-team.epfl.ch" value="https://rocket-team.epfl.ch" />
 
-                <label for="login-field">Login (of your wiki account):</label>
-                <input type="text" id="email" name="wiki-url" required placeholder="email" />
-                <input type="password" id="password" name="wiki-url" required placeholder="password" />
+                <label for="login-field">Login of your wiki account (only for retrieving an access token, skip if you already have one):</label>
+                <input type="text" id="email" name="wiki-url" placeholder="email" />
+                <input type="password" id="password" name="wiki-url" placeholder="password" />
+
+                <button type="button" onclick="retrieveAccessToken()" class="button" style="margin-top: 0">
+                    <span class="material-icons">key</span>
+                    Retrieve Access Token
+                </button>
 
 
-                <!--div id="token-field">
+                <div id="token-field">
                     <label for="access-token">
                         Access Token 
                         <a href="/how-to-get-access-token" target="_blank" style="font-size: 14px; color: #3f51b5; text-decoration: underline; margin-left: 5px;">
-                        How to obtain access token
+                        How to obtain access token directly with GraphQL
                         </a>
-                        <input type="text" id="access-token" name="access-token" required />
+                        <input type="text" id="access-token" name="access-token" required placeholder="Your access token (retrieved from just above or directly via GraphQL)"/>
                     </label>
-                </div-->
+                </div>
 
                 <div id="pages">
                     <h3>Pages to Export:</h3>
@@ -275,10 +281,10 @@
             </select>
 
             <iframe id="pdf-preview" width="100%" height="600px" style="border: none;"></iframe>
-            <!--button id="download-button" class="button">
+            <button id="download-button" class="button">
                 <span class="material-icons">download</span>
                 Download PDF
-            </button-->
+            </button>
         </div>
 
         <script>
@@ -653,7 +659,7 @@
                     });
                 } else {
                 // Handle the error
-                console.error(response.error)
+                console.error("error generating pdf")
                 // Display an error message to the user
                 }
             })
@@ -674,6 +680,17 @@
         function displayPdfPreview(url) {
             const pdfPreviewElement = document.getElementById('pdf-preview')
 
+            const downloadButton = document.getElementById('download-button');
+
+            downloadButton.addEventListener('click', () => {
+                const title = document.getElementById('title').value;
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            })
 
             // Set the iframe's src to the object URL
             pdfPreviewElement.src = url;
@@ -692,6 +709,90 @@
             tabContents[3].classList.add('active');
 
         }
+
+	function retrieveAccessToken() {
+	    console.log("Hello World");
+
+	    const wikiUrl = document.getElementById('wiki-url').value.trim() + "/graphql";
+        console.log(wikiUrl)
+
+	    const email = document.getElementById('email').value;
+	    const password = document.getElementById('password').value;
+
+	    loginToGraphQL(email, password, wikiUrl).then(response => {
+            document.getElementById("access-token").value = response;
+        })
+	}
+
+    async function loginToGraphQL(username, password, endpointUrl) {
+        try {
+            const response = await fetch('/get-access-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, endpointUrl })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Access token retrieved:', data.token); // Assuming the response includes a `token` field
+            return data.token;
+        } catch (error) {
+            console.error('Error logging in:', error.message);
+        }
+    }
+    
+	  /*const query = `
+	    mutation {
+	      authentication {
+		login(
+		  username: "${username}",
+		  password: "${password}",
+		  strategy: "local"
+		) {
+		  jwt
+		}
+	      }
+	    }
+	  `;
+
+	  try {
+	    const response = await fetch(endpointUrl, {
+	      method: 'POST',
+	      headers: {
+		'Content-Type': 'application/json',
+	      },
+	      body: JSON.stringify({ query }),
+	    });
+
+	    const result = await response.json();
+
+	    if (response.ok && result.data) {
+	      console.log('JWT:', result.data.authentication.login.jwt);
+	      return result.data.authentication.login.jwt;
+	    } else {
+	      console.error('Error:', result.errors || 'Unknown error');
+	    }
+	  } catch (error) {
+	    console.error('Network Error:', error);
+	  }
+	}
+
+	// Example usage
+	// Replace these placeholders with your values
+	const username = 'your-username';
+	const password = 'your-password';
+	const endpointUrl = 'https://your-graphql-endpoint.com/graphql';
+
+	loginToGraphQL(username, password, endpointUrl)
+	  .then(jwt => {
+	    if (jwt) {
+	      console.log('Logged in successfully, JWT:', jwt);
+	    } 
+	  }); 
+        */
         </script>
     </div>
 </body>

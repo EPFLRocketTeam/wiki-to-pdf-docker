@@ -20,6 +20,7 @@ class WikiPage:
     def __init__(self, path, locale):
         self.path = path
         self.locale = locale
+
 def remove_backtick_content(text):
     """
     Removes content enclosed within triple backticks, including the backticks themselves.
@@ -219,6 +220,46 @@ def convert_markdown():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
+@app.route('/get-access-token', methods=['POST'])
+def get_access_token():
+    try:
+        # Parse incoming JSON payload
+        data = request.get_json()
+        username = data['username']
+        password = data['password']
+        endpoint_url = data['endpointUrl']
+
+        # GraphQL mutation for authentication
+        graphql_query = {
+            "query": """
+                mutation {
+                    authentication {
+                        login(
+                            username: "%s",
+                            password: "%s",
+                            strategy: "local"
+                        ) {
+                            jwt
+                        }
+                    }
+                }
+            """ % (username, password)  # Using string interpolation for simplicity
+        }
+
+        # Send GraphQL request
+        response = requests.post(endpoint_url, json=graphql_query)
+        response.raise_for_status()
+        graphql_data = response.json()
+
+        # Extract the JWT token from the GraphQL response
+        jwt_token = graphql_data['data']['authentication']['login']['jwt']
+        return jsonify({"token": jwt_token})
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+    except KeyError:
+        return jsonify({"error": "Invalid GraphQL response"}), 500
+
 @app.route('/generate-pdf', methods=['POST'])
 def generate_pdf():
     latex_code = request.json.get('latex_code')
@@ -232,8 +273,6 @@ def generate_pdf():
         f.write(latex_code)
     
     # Compile the LaTeX file to PDF using lualatex with -shell-escape
-    subprocess.run(['lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path], )#stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
     result = subprocess.run([
         'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
     ], )#stdout=subprocess.PIPE, stderr=subprocess.PIPE)
