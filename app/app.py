@@ -144,37 +144,8 @@ def how_to_get_access_token():
 @app.route('/fetch', methods=['POST'])
 def fetch_content():
     urls = request.json.get('urls', [])
-    email = request.json.get('email')
-    password = request.json.get('password')
-    
-    if not urls:
-        return jsonify({'error': 'No URLs provided'}), 400
-    if not email or not password:
-        return jsonify({'error': 'Email and password are required'}), 400
-    
-    # Step 1: Authenticate to get JWT token
-    auth_url = "https://rocket-team.epfl.ch/graphql"
-    auth_query = {
-        'query': """
-            mutation {
-              authentication {
-                login(
-                  username: "%s",
-                  password: "%s",
-                  strategy: "local"
-                ) {
-                  jwt
-                }
-              }
-            }
-        """ % (email, password)
-    }
-    
-    auth_response = requests.post(auth_url, json=auth_query)
-    if auth_response.status_code != 200 or 'errors' in auth_response.json():
-        return jsonify({'error': 'Authentication failed'}), 401
-    
-    jwt_token = auth_response.json()['data']['authentication']['login']['jwt']
+    auth_url = request.json.get('graphql_url')
+    jwt_token = request.json.get('token')
     
     # Step 2: Fetch content with JWT token
     parsed_data = parse_rocket_urls(urls)

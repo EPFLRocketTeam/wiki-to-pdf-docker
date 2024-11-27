@@ -444,8 +444,10 @@
 		event.preventDefault();
 
 		const wikiUrl = document.getElementById('wiki-url').value.trim();
-		const email = document.getElementById('email').value;
-		const password = document.getElementById('password').value;
+		//const email = document.getElementById('email').value;
+		//const password = document.getElementById('password').value;
+		const token = document.getElementById('access-token').value;
+        const graphql_url = wikiUrl + "/graphql"
 
 		if (!wikiUrl || !email || !password) {
 		    alert("Please enter the Wiki URL, Email, and Password.");
@@ -456,7 +458,7 @@
 		fetch('/fetch', {
 		    method: 'POST',
 		    headers: { 'Content-Type': 'application/json' },
-		    body: JSON.stringify({ urls, email, password })
+		    body: JSON.stringify({ urls, token, graphql_url })
 		})
 		.then(response => response.json())
 		.then(data => {
