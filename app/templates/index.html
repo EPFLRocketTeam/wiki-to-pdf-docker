@@ -280,6 +280,8 @@
             <select id="pdf-selector" onchange="loadMarkdownContent(this.value)">
             </select>
 
+            <pre><code id="compiler-output"></code></pre>
+
             <iframe id="pdf-preview" width="100%" height="600px" style="border: none;"></iframe>
             <button id="download-button" class="button">
                 <span class="material-icons">download</span>
@@ -662,7 +664,19 @@
                 } else {
                     // Handle the error
                     response.json().then(json => {
-                        console.error(json.message)
+                        console.error(json.message);
+                        document.getElementById('compiler-output').textContent = json.message;
+
+                        // Unselect other tabs
+                        const tabs = document.querySelectorAll('.tab');
+                        const contents = document.querySelectorAll('.tab-content');
+                        tabs.forEach(t => t.classList.remove('active'));
+                        contents.forEach(content => content.classList.remove('active'));
+
+                        // Switch to the Generated PDF tab
+                        tabs[3].classList.add('active');
+                        const tabContents = document.querySelectorAll('.tab-content');
+                        tabContents[3].classList.add('active');
                     })
                     // Display an error message to the user
                 }
@@ -682,6 +696,8 @@
 	    }
 
         function displayPdfPreview(url) {
+            document.getElementById('compiler-output').textContent = ""; // clear compiler output
+
             const pdfPreviewElement = document.getElementById('pdf-preview')
 
             const downloadButton = document.getElementById('download-button');
