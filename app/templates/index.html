@@ -660,9 +660,11 @@
                         displayPdfPreview(url); // Pass the URL to the function
                     });
                 } else {
-                // Handle the error
-                console.error("error generating pdf")
-                // Display an error message to the user
+                    // Handle the error
+                    response.json().then(json => {
+                        console.error(json.message)
+                    })
+                    // Display an error message to the user
                 }
             })
             .catch(error => {
