@@ -92,7 +92,7 @@ def compile_latex_with_draft(tex_file_path):
         print("Second compilation (without draft) failed.")
         print(result.stderr.decode())
     return result
-    
+
 def remove_backtick_content(text):
     """
     Removes content enclosed within triple backticks, including the backticks themselves.
@@ -326,7 +326,7 @@ def generate_pdf():
         # Handle compilation errors by returning the error message
         return {
             "error": "Failed to compile PDF",
-            "message": result.stderr.decode()
+            "message": "----------StdErr----------\n" + result.stderr.decode() + "\n----------StdOut----------\n" + result.stdout.decode()
         }, 500
 
     return send_file(pdf_file_path, mimetype='application/pdf', as_attachment=True)
