@@ -21,6 +21,78 @@ class WikiPage:
         self.path = path
         self.locale = locale
 
+def add_draft_to_documentclass(tex_file_path):
+    """
+    Adds the `draft` option to the `\documentclass` line in a LaTeX file.
+    """
+    with open(tex_file_path, 'r') as file:
+        lines = file.readlines()
+
+    modified_lines = []
+    for line in lines:
+        if line.strip().startswith(r'\documentclass'):
+            if '[' in line:
+                # Add `draft` to existing options
+                line = line.replace('[', '[draft,')
+            else:
+                # Add `[draft]` if no options exist
+                line = line.replace(r'\documentclass{', r'\documentclass[draft]{')
+        modified_lines.append(line)
+
+    with open(tex_file_path, 'w') as file:
+        file.writelines(modified_lines)
+
+def remove_draft_from_documentclass(tex_file_path):
+    """
+    Removes the `draft` option from the `\documentclass` line in a LaTeX file.
+    """
+    with open(tex_file_path, 'r') as file:
+        lines = file.readlines()
+
+    modified_lines = []
+    for line in lines:
+        if line.strip().startswith(r'\documentclass') and 'draft' in line:
+            # Remove the `draft` option
+            line = line.replace('draft,', '').replace(',draft', '').replace('[draft]', '')
+        modified_lines.append(line)
+
+    with open(tex_file_path, 'w') as file:
+        file.writelines(modified_lines)
+
+def compile_latex_with_draft(tex_file_path):
+    """
+    Compiles the LaTeX file twice: first with the `draft` option, then without.
+    """
+    # Add `draft` to \documentclass
+    add_draft_to_documentclass(tex_file_path)
+    
+    # First compilation with `draft`
+    result = subprocess.run([
+        'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    if result.returncode == 0:
+        print("First compilation (with draft) succeeded.")
+    else:
+        print("First compilation (with draft) failed.")
+        print(result.stderr.decode())
+        return result # Stop if the first run fails
+
+    # Remove `draft` from \documentclass
+    remove_draft_from_documentclass(tex_file_path)
+
+    # Second compilation without `draft`
+    result = subprocess.run([
+        'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    if result.returncode == 0:
+        print("Second compilation (without draft) succeeded.")
+    else:
+        print("Second compilation (without draft) failed.")
+        print(result.stderr.decode())
+    return result
+    
 def remove_backtick_content(text):
     """
     Removes content enclosed within triple backticks, including the backticks themselves.
@@ -244,10 +316,11 @@ def generate_pdf():
         f.write(latex_code)
     
     # Compile the LaTeX file to PDF using lualatex with -shell-escape
-    result = subprocess.run([
-        'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
-    ], )#stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    print(result.returncode)
+    #result = subprocess.run([
+        #'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
+    #], )#stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #print(result.returncode)
+    result = compile_latex_with_draft(tex_file_path)
     
     if result.returncode != 0:
         # Handle compilation errors by returning the error message
