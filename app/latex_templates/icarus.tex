@@ -37,6 +37,23 @@
 \usepackage{minted}
 \usepackage{tcolorbox}
 
+% Define the lineNumbers variable from Pandoc metadata
+\newcommand{\lineNumbers}{$lineNumbers$}
+
+% Default the lineNumbers variable to 'false' (as a string) if it's not set by Pandoc
+\ifx\lineNumbers\undefined
+    \def\lineNumbers{false}  % Define as 'false' string if not defined
+\fi
+
+% Check if lineNumbers is 'true' (as a string)
+\ifx\lineNumbers\true
+    \usepackage{lineno}
+    \renewcommand\linenumberfont{\tiny\rmfamily\color{gray!70}} % Sets line numbers to 8pt font size
+    \linenumbers
+\else
+    % Line numbers are disabled
+\fi
+
 \newcommand{\colora}{black}
 \newcommand{\colorb}{red}
 \newcommand{\colorc}{yellow!80!black}
@@ -60,18 +77,6 @@
   %\fi\fi\fi\fi\fi
   %\kern-1em%
 %}
-
-% If the lineNumbers variable is not set by Pandoc, set it to false by default
-\ifdefempty{$lineNumbers$}{\def\lineNumbers{false}}{$lineNumbers$}
-
-% Conditionally enable line numbering based on the value of 'lineNumbers'
-\ifx\lineNumbers\true
-    \usepackage{lineno}
-    \renewcommand\linenumberfont{\tiny\rmfamily\color{gray!70}} % Sets line numbers to 8pt font size
-    \linenumbers
-\else
-    % Line numbers are disabled
-\fi
 
 % PANDOC IMPORTS
 \makeatletter
