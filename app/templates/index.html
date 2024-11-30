@@ -584,63 +584,69 @@
 
 	    const convertButton = document.getElementById('convert-button');
 	    convertButton.addEventListener('click', () => {
-	      // Get the necessary values
-	      const markdownContent = getMarkdownContent();
-	      const author = document.getElementById('author').value;
-	      const date = document.getElementById('date').value;
-	      const title = document.getElementById('title').value;
-	      const documentId = document.getElementById('document-id').value;
-	      const template = document.getElementById('template').value;
+            convertButton.textContent = 'Converting...';
+            convertButton.disabled = true;
+            // Get the necessary values
+            const markdownContent = getMarkdownContent();
+            const author = document.getElementById('author').value;
+            const date = document.getElementById('date').value;
+            const title = document.getElementById('title').value;
+            const documentId = document.getElementById('document-id').value;
+            const template = document.getElementById('template').value;
 
-	      // Make the fetch request
-	      fetch('/convert', {
-		method: 'POST',
-		headers: {
-		  'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({
-		  markdown: markdownContent,
-		  author,
-		  date,
-		  title,
-		  documentId,
-		  template,
-		}),
-	      })
-		.then((response) => response.json())
-		.then((data) => {
-		  if (data.error) {
-		    console.error(data.error);
-		  } else {
-		    // Update the Document Code tab with the generated LaTeX content
-		    if (latexEditor) {
-		      latexEditor.setValue(data.latex);
-		    } else {
-		      const documentCodeElement = document.getElementById('document-code');
-		      documentCodeElement.textContent = data.latex;
-		    }
+            // Make the fetch request
+            fetch('/convert', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                markdown: markdownContent,
+                author,
+                date,
+                title,
+                documentId,
+                template,
+                }),
+                })
+            .then((response) => response.json())
+            .then((data) => {
+            if (data.error) {
+                console.error(data.error);
+            } else {
+                // Update the Document Code tab with the generated LaTeX content
+                if (latexEditor) {
+                latexEditor.setValue(data.latex);
+                } else {
+                const documentCodeElement = document.getElementById('document-code');
+                documentCodeElement.textContent = data.latex;
+                }
 
 
-		    const tabs = document.querySelectorAll('.tab');
-		    const contents = document.querySelectorAll('.tab-content');
-		    tabs.forEach(t => t.classList.remove('active'));
-		    contents.forEach(content => content.classList.remove('active'));
+                const tabs = document.querySelectorAll('.tab');
+                const contents = document.querySelectorAll('.tab-content');
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(content => content.classList.remove('active'));
 
-		    // Switch to the Document Code tab
-		    tabs[2].classList.add('active');
-		    const tabContents = document.querySelectorAll('.tab-content');
-		    tabContents[2].classList.add('active');
-		  }
-		})
-		.catch((error) => {
-		  console.error('Error:', error);
-		});
+                // Switch to the Document Code tab
+                tabs[2].classList.add('active');
+                const tabContents = document.querySelectorAll('.tab-content');
+                tabContents[2].classList.add('active');
+            }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+            convertButton.textContent = 'Convert To Document Code';
+            convertButton.disabled = false;
 	    });
 
         // Assume you have a reference to the "Compile PDF" button
         const compileButton = document.getElementById('compile-button');
 
         compileButton.addEventListener('click', () => {
+            compileButton.textContent = 'Compiling...';
+            compileButton.disabled = true;
             // Get the LaTeX code from the code editor
             const latexCode = getLatexCodeFromEditor();
 
@@ -685,6 +691,8 @@
                 console.error('Error generating PDF:', error);
                 // Display an error message to the user
             });
+            convertButton.textContent = 'Compile PDF';
+            convertButton.disabled = false;
         });
 
         function getLatexCodeFromEditor() {
