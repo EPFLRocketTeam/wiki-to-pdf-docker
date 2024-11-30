@@ -237,10 +237,18 @@
                 <option value="default" disabled>Default</option>
             </select>
 
-            <button id="convert-button" class="button">
-                <span class="material-icons">code</span>
-                Convert to Document Code
-            </button>
+            <div>
+                <label for="lineNumbers">Show Line Numbers:
+                    <input type="checkbox" id="lineNumbers" name="lineNumbers" value="false">
+                </label>
+            </div>
+
+            <div>
+                <button id="convert-button" class="button">
+                    <span class="material-icons">code</span>
+                    Convert to Document Code
+                </button>
+            </div>
         </div>
 
         <!-- Tab 3: Document Code -->
@@ -593,6 +601,7 @@
             const title = document.getElementById('title').value;
             const documentId = document.getElementById('document-id').value;
             const template = document.getElementById('template').value;
+            const lineNumbersEnabled = document.getElementById("lineNumbers").checked;
 
             // Make the fetch request
             fetch('/convert', {
@@ -606,7 +615,8 @@
                     date,
                     title,
                     documentId,
-                    template
+                    template,
+                    lineNumbersEnabled
                 }),
                 })
             .then((response) => response.json())
