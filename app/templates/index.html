@@ -601,12 +601,12 @@
                 'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                markdown: markdownContent,
-                author,
-                date,
-                title,
-                documentId,
-                template,
+                    markdown: markdownContent,
+                    author,
+                    date,
+                    title,
+                    documentId,
+                    template
                 }),
                 })
             .then((response) => response.json())
@@ -637,7 +637,7 @@
             .catch((error) => {
                 console.error('Error:', error);
             });
-            convertButton.textContent = 'Convert To Document Code';
+            convertButton.innerHTML = '<span class="material-icons">code</span> Convert to Document Code';
             convertButton.disabled = false;
 	    });
 
@@ -691,8 +691,8 @@
                 console.error('Error generating PDF:', error);
                 // Display an error message to the user
             });
-            convertButton.textContent = 'Compile PDF';
-            convertButton.disabled = false;
+            convertButton.innerHTML = '<span class="material-icons">picture_as_pdf</span> Compile PDF';
+            compileButton.disabled = false;
         });
 
         function getLatexCodeFromEditor() {
