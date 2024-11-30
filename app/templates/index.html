@@ -584,7 +584,7 @@
 
 	    const convertButton = document.getElementById('convert-button');
 	    convertButton.addEventListener('click', () => {
-            convertButton.textContent = 'Converting...';
+            convertButton.innerHTML = 'Converting...';
             convertButton.disabled = true;
             // Get the necessary values
             const markdownContent = getMarkdownContent();
@@ -645,7 +645,7 @@
         const compileButton = document.getElementById('compile-button');
 
         compileButton.addEventListener('click', () => {
-            compileButton.textContent = 'Compiling...';
+            compileButton.innerHTML = 'Compiling...';
             compileButton.disabled = true;
             // Get the LaTeX code from the code editor
             const latexCode = getLatexCodeFromEditor();
