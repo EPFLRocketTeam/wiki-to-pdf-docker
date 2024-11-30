@@ -40,10 +40,15 @@ end
 
 -- Convert SVG to PDF using draw.io CLI
 local function convert_svg_to_pdf(svg_content, output_pdf)
-    local temp_svg = os.tmpname() .. ".svg"
-    write_file(temp_svg, svg_content)
-    os.execute("xvfb-run drawio --no-sandbox --export --format pdf --output " .. output_pdf .. " " .. temp_svg .. " > /dev/null 2>&1")
-    os.remove(temp_svg)
+  -- Step 1: Create a temporary SVG file
+  local temp_svg = os.tmpname() .. ".svg"
+  write_file(temp_svg, svg_content)
+
+  -- Step 2: Use Inkscape to convert SVG to PDF
+  os.execute("inkscape --export-type=pdf --export-area-drawing --export-filename=" .. output_pdf .. " " .. temp_svg .. " > /dev/null 2>&1")
+
+  -- Step 3: Remove temporary SVG file
+  os.remove(temp_svg)
 end
 
 function CodeBlock(block)

@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y \
     libgbm1 \
     libpangocairo-1.0-0 \
     libcurl4 \
+    inkscape \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Draw.io (CLI version)
