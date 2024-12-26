@@ -38,15 +38,6 @@ RUN apt-get update && apt-get install -y \
     inkscape \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Draw.io (CLI version)
-RUN curl -s https://api.github.com/repos/jgraph/drawio-desktop/releases/latest \
-    | grep browser_download_url \
-    | grep '\.deb' \
-    | cut -d '"' -f 4 \
-    | wget -i - \
-    && apt install -y ./drawio-amd64-*.deb \
-    && rm drawio-amd64-*.deb
-
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
