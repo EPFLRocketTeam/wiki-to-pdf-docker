@@ -152,7 +152,7 @@
         <div class="tab-content active">
             <form id="settings-form" onsubmit="fetchWikiContents(event)">
                 <label for="wiki-url">Wiki URL:</label>
-                <input type="text" id="wiki-url" name="wiki-url" required placeholder="e.g., https://rocket-team.epfl.ch" value="https://rocket-team.epfl.ch" />
+                <input type="text" id="wiki-url" name="wiki-url" required placeholder="e.g., https://wiki.epfl-rocket-team.ch" value="https://wiki.epfl-rocket-team.ch" />
 
                 <label for="login-field">Login of your wiki account (only for retrieving an access token, skip if you already have one):</label>
                 <input type="text" id="email" name="wiki-url" placeholder="email" />
@@ -382,7 +382,7 @@
                 newPage.classList.add('page-entry');
                 newPage.innerHTML = `
                     <label>Full Page URL:</label>
-                    <input type="text" class="full-url-input" oninput="updatePagePath(this)" placeholder="e.g., https://rocket-team.epfl.ch/en/management" required />
+                    <input type="text" class="full-url-input" oninput="updatePagePath(this)" placeholder="e.g., https://wiki.epfl-rocket-team.ch/en/management" required />
                     <label>Extracted Page Path:</label>
                     <input type="text" class="page-path-input" readonly />
                     <label>Locale:</label>
