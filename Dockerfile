@@ -54,6 +54,7 @@ COPY ./app .
 COPY gunicorn.conf.py .
 COPY ./ert_wiki ./ert_wiki
 COPY ImageLuaFilter.lua .
+COPY ~/.ssh:/root/.ssh:ro
 
 # Ensure cron runs in the container
 CMD ["sh", "-c", "cron && gunicorn --config gunicorn.conf.py app:app"]
