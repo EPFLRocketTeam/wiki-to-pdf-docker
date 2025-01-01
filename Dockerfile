@@ -36,11 +36,18 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libcurl4 \
     inkscape \
+    cron \
+    git \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Add cron job to pull the repo every minute
+RUN echo "* * * * * cd /app/ert_wiki && git pull > /var/log/cron.log 2>&1" > /etc/cron.d/ert_wiki_cron \
+    && chmod 0644 /etc/cron.d/ert_wiki_cron \
+    && crontab /etc/cron.d/ert_wiki_cron
 
 # Copy application code
 COPY ./app .
@@ -48,8 +55,8 @@ COPY gunicorn.conf.py .
 COPY ./ert_wiki ./ert_wiki
 COPY ImageLuaFilter.lua .
 
+# Ensure cron runs in the container
+CMD ["sh", "-c", "cron && gunicorn --config gunicorn.conf.py app:app"]
+
 # Expose port 8000 (Gunicorn default)
 EXPOSE 8000
-
-# Default command (run the app)
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]

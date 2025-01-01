@@ -8,15 +8,16 @@ services:
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
-    network_mode: "host"  # Use host's network configuration
+    network_mode: "host"
     restart: unless-stopped
     networks:
       - default
       - nginx-proxy
+    volumes:
+      - ~/.ssh:/root/.ssh:ro  # Mount SSH keys
+      - ./ert_wiki:/app/ert_wiki  # Mount the repo directory
 
 networks:
-    nginx-proxy:
-        external:
-            name: nginx-proxy
-
-
+  nginx-proxy:
+    external:
+      name: nginx-proxy
