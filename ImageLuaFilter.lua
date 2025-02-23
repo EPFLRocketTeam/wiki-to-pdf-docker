@@ -82,33 +82,18 @@ end
 
 function Image(elem)
   local src = elem.src
-  local width, height
 
-  -- Parse the "=widthxheight" syntax at the end of the source
-  local src_clean, dimensions = src:match("^(.-)%s*=%s*(.-)x(.-)$")
-  if dimensions then
-    src = src_clean
-    -- Match numeric or percentage width and height
-    width = dimensions:match("^(%d+%%?)$")
-    height = dimensions:match("^(%d+%%?)$")
-  end
+  -- Remove any trailing extra syntax (e.g. " =600x" or " =600x300")
+  src = src:gsub("%s*=%s*%d+x%d*$", "")
 
-  -- Prepend the fixed base path
+  -- Decode any URL-encoded spaces, then trim any leading/trailing whitespace
+  src = src:gsub("%%20", " "):gsub("^%s*(.-)%s*$", "%1")
+
+  -- Remove any leading slashes to avoid double slashes when prepending the base path
+  src = src:gsub("^%s*/+", "")
+
   src = "/app/ert_wiki/" .. src
 
-  -- Add width and height to attributes if they exist
-  if width then
-    elem.attributes["width"] = width
-  end
-  if height then
-    elem.attributes["height"] = height
-  end
-
-  -- Preserve alignment or other classes (e.g., .align-center)
-  if elem.classes then
-    elem.attributes["class"] = table.concat(elem.classes, " ")
-  end
-
-  elem.src = src -- Update the source
-  return elem
+  local latex_code = string.format("\\includegraphics[width=\\linewidth, height=\\textheight, keepaspectratio]{%s}", src)
+  return pandoc.RawInline("latex", latex_code)
 end
