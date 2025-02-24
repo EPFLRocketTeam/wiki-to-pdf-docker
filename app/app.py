@@ -1,15 +1,18 @@
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, render_template, send_file, session
 from datetime import datetime
 from urllib.parse import urlparse
 import requests
 import re
-import os
-import io
 import subprocess
+import uuid
+import redis
+import json
+from flask_cors import CORS
 from markdown_converter import MarkdownConverter, ConversionError
 from page_data_manager import PageDataManager, PageMetadata
 
 app = Flask(__name__)
+CORS(app, origins=["https://rocket-team.epfl.ch"])
 converter = MarkdownConverter()
 page_manager = PageDataManager()
 
@@ -65,7 +68,7 @@ def compile_latex_with_draft(tex_file_path):
     """
     # Add `draft` to \documentclass
     add_draft_to_documentclass(tex_file_path)
-    
+
     # First compilation with `draft`
     result = subprocess.run([
         'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
@@ -122,7 +125,7 @@ def add_blank_line_after_titles(text):
     while i < len(lines):
         line = lines[i]
         result_lines.append(line)
-        
+
         # Check if the line is a title starting with '##'
         if re.match(r'^##\s', line):
             # Skip '## table {.tabset}' titles
@@ -152,7 +155,7 @@ def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) ->
         "Authorization": f"Bearer {jwt_token}",
         "Content-Type": "application/json"
     }
-    
+
     contents = []
     for path, locale in zip(paths, locales):
         query = f"""{{
@@ -167,9 +170,9 @@ def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) ->
                 }}
             }}
         }}"""
-        
+
         response = requests.post(url, headers=headers, json={'query': query})
-        
+
         if response.status_code == 200:
             data = response.json()
             if 'errors' in data:
@@ -178,8 +181,8 @@ def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) ->
                 contents.append(data['data']['pages']['singleByPath'])
         else:
             contents.append({'path': path, 'error': f'HTTP Error: {response.status_code}'})
-    
-    
+
+
     return contents
 
 def parse_rocket_urls(urls: list) -> list:
@@ -190,19 +193,19 @@ def parse_rocket_urls(urls: list) -> list:
     for url in urls:
         parsed_url = urlparse(url)
         path_segments = [seg for seg in parsed_url.path.split('/') if seg]
-        
+
         # Determine locale
         locale = 'en'
         if path_segments and path_segments[0] in SUPPORTED_LANGUAGES:
             locale = path_segments[0]
             path_segments = path_segments[1:]
-        
+
         # Join the remaining path segments to get the full path
         path = '/'.join(path_segments) if path_segments else 'home'
-        
+
         # Store path and locale
         parsed_pages.append(WikiPage(path=path, locale=locale))
-    
+
     return parsed_pages
 
 @app.route('/')
@@ -218,12 +221,12 @@ def fetch_content():
     urls = request.json.get('urls', [])
     auth_url = request.json.get('graphql_url')
     jwt_token = request.json.get('token')
-    
+
     # Step 2: Fetch content with JWT token
     parsed_data = parse_rocket_urls(urls)
     paths = [page.path for page in parsed_data]
     locales = [page.locale for page in parsed_data]
-    
+
     try:
         content_data = fetch_wiki_contents(paths, locales, auth_url, jwt_token)
         return jsonify(content_data)
@@ -244,21 +247,21 @@ def convert_markdown():
             'documentId': data.get('documentId', ''),
             'lineNumbers': data.get('lineNumbersEnabled', False)
         }
-        
+
         if not markdown_content:
             return jsonify({'error': 'No markdown content provided'}), 400
-            
+
         latex_content = converter.convert_to_latex(
             filtered_markdown_content,
             template=template,
             metadata=metadata
         )
-        
+
         return jsonify({
             'latex': latex_content,
             'status': 'success'
         })
-        
+
     except ConversionError as e:
         return jsonify({'error': str(e)}), 500
     except Exception as e:
@@ -308,21 +311,21 @@ def get_access_token():
 def generate_pdf():
     latex_code = request.json.get('latex_code')
     title = request.json.get('title', 'document')
-    
+
     # Save the LaTeX code to a temporary .tex file
     tex_file_path = '/tmp/document.tex'
     pdf_file_path = '/tmp/document.pdf'
-    
+
     with open(tex_file_path, 'w') as f:
         f.write(latex_code)
-    
+
     # Compile the LaTeX file to PDF using lualatex with -shell-escape
     #result = subprocess.run([
         #'lualatex', '-shell-escape', '-output-directory', '/tmp', tex_file_path
     #], )#stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     #print(result.returncode)
     result = compile_latex_with_draft(tex_file_path)
-    
+
     if result.returncode != 0:
         # Handle compilation errors by returning the error message
         return {
@@ -331,6 +334,29 @@ def generate_pdf():
         }, 500
 
     return send_file(pdf_file_path, mimetype='application/pdf', as_attachment=True)
+
+# Connect to Redis (replace with your own settings)
+redis_client = redis.StrictRedis(host='some-redis', port=6379, db=0, decode_responses=True)
+
+@app.route('/store', methods=['POST'])
+def store_data():
+    data = request.json
+    if not data:
+        return jsonify({"error": "Invalid data"}), 400
+
+    session_id = str(uuid.uuid4())  # Generate unique ID
+    redis_client.set(session_id, json.dumps(data))  # Store in Redis (serialize data)
+
+    return jsonify({"session_id": session_id})
+
+@app.route('/edit')
+def edit_page():
+    session_id = request.args.get("session_id")
+    if not session_id or not redis_client.exists(session_id):
+        return "Invalid session", 400
+
+    data = redis_client.get(session_id)
+    return render_template("edit.html", data=data)  # Pass to frontend
 
 if __name__ == '__main__':
     app.run(debug=True)

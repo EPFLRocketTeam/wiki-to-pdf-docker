@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta property="og:title" content="Wiki.js to PDF converter">
+    <meta property="og:description" content="Webapp to convert wiki.js pages into pdf pages, with custom styling and options. It's built with Flask, a micro web framework written in Python.">
+    <meta property="og:image" content="{{ url_for('static', filename='images/wikitopdf-sharing-card.jpg', _external=True) }}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:type" content="website">
+
+    <title>Wiki to PDF Converter</title>
+    <!--script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs"></script-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+    <style>
+        /* General styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            margin: 0;
+	    padding: 50px;
+        }
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .button {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .button:hover {
+            background-color: #303f9f;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .button.secondary {
+            background-color: #f5f5f5;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        .button.secondary:hover {
+            background-color: #eeeeee;
+        }
+        /* Tab styling */
+        .tabs {
+            display: flex;
+            cursor: pointer;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            flex: 1;
+            text-align: center;
+            color: #666;
+            font-weight: 500;
+        }
+        .tab.active {
+            color: #3f51b5;
+            border-bottom: 2px solid #3f51b5;
+        }
+        /* Tab content styling */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Input styling */
+        label {
+            font-weight: 500;
+            display: block;
+            margin: 15px 0 5px;
+            color: #333;
+        }
+        input[type="text"],
+        select,
+        input[type="password"],
+        input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        /* Page entry styling */
+        .page-entry {
+            background-color: #f8f9fa;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        /* Readonly input styling */
+        input[readonly] {
+            background-color: #e9ecef;
+            color: #495057;
+            cursor: not-allowed;
+        }
+        /* Monaco editor container */
+        #monaco-editor {
+            height: 500px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        #document-code {
+            height: 500px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active">1. Markdown</div>
+            <div class="tab">2. Document Code</div>
+            <div class="tab">3. Generated PDF</div>
+        </div>
+
+        <!-- Tab Content -->
+        <!-- Tab 1: Markdown Display -->
+        <div class="tab-content active">
+            <h2>Markdown Content</h2>
+
+            <div id="monaco-editor"></div>
+
+            <h3>Front Page Settings</h3>
+            <label for="author">Author:</label>
+            <input type="text" id="author" name="author" placeholder="Author name" />
+
+            <label for="date">Date:</label>
+	    <input type="date" id="date" name="date" placeholder="dd-mm-yyyy" required>
+
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" placeholder="Document Title" />
+
+            <label for="document-id">Document ID:</label>
+            <input type="text" id="document-id" name="document-id" placeholder="e.g., 202X_P_SS_DOC"/>
+
+            <h3>Document Formatting Options</h3>
+            <!--label for="markup">Markup Language:</label>
+            <select id="markup" name="markup">
+                <option value="latex">LaTeX</option>
+                <option value="typst" disabled>Typst</option>
+                <option value="quarto" disabled>Quarto</option>
+            </select>
+
+            <label for="lua-filter">Lua Filter:</label>
+            <select id="lua-filter" name="lua-filter">
+                <option value="epfl">EPFL Rocket Team</option>
+                <option value="default" disabled>Default</option>
+            </select-->
+
+            <label for="template">Template:</label>
+            <select id="template" name="template">
+                <option value="space-race">EPFL Rocket Team - Space Race</option>
+                <option value="competition">EPFL Rocket Team - Competition</option>
+                <option value="icarus">EPFL Rocket Team - Icarus</option>
+                <option value="hyperion">EPFL Rocket Team - Hyperion</option>
+                <option value="default" disabled>Default</option>
+            </select>
+
+            <div>
+                <label for="lineNumbers">Show Line Numbers:
+                    <input type="checkbox" id="lineNumbers" name="lineNumbers" value="false">
+                </label>
+            </div>
+
+            <div>
+                <button id="convert-button" class="button">
+                    <span class="material-icons">code</span>
+                    Convert to Document Code
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab 2: Document Code -->
+        <div class="tab-content">
+            <h2>Document Code</h2>
+
+            <div class="code-display" id="document-code"></div>
+
+            <!--h3>Compile Options</h3>
+            <label class="radio-label">Compile Location:</label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="compile-server" name="compile" value="server" checked />
+                    <label for="compile-server">Server</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="compile-browser" name="compile" value="browser" />
+                    <label for="compile-browser">Browser</label>
+                </div>
+            </div-->
+
+            <button id="compile-button" class="button">
+                <span class="material-icons">picture_as_pdf</span>
+                Compile PDF
+            </button>
+        </div>
+
+        <!-- Tab 3: Generated PDF -->
+        <div class="tab-content">
+            <h2>Generated PDF</h2>
+
+            <pre><code id="compiler-output"></code></pre>
+
+            <iframe id="pdf-preview" width="100%" height="600px" style="border: none;"></iframe>
+            <button id="download-button" class="button">
+                <span class="material-icons">download</span>
+                Download PDF
+            </button>
+        </div>
+
+        <script>
+        const pageData = {{ data | tojson | safe }};
+	const jsonData = JSON.parse(pageData);
+	console.log(typeof pageData );
+	console.log(jsonData);
+
+        let selectedPages = [];  // Array to hold page paths
+        let pageContents = {};   // Holds fetched content for each path
+        let monacoEditor = null;
+	    let latexEditor = null;
+	    let pageMetadata = {
+		    // Format will be:
+		    // pagePath: {
+		    //     author: string,
+		    //     title: string,
+		    //     date: string,
+		    //     documentId: string,
+		    //     template: string
+		    // }
+	    };  // Store metadata for each page
+
+            // Initialize Monaco Editor
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+            require(['vs/editor/editor.main'], function() {
+                monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
+                    value: '',
+                    language: 'markdown',
+                    theme: 'vs-light',
+                    automaticLayout: true,
+                    minimap: {
+                        enabled: true
+                    },
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on'
+                });
+		const latexContainer = document.getElementById('document-code');
+		latexEditor = monaco.editor.create(latexContainer, {
+		  value: '',
+		  language: 'latex',
+		  theme: 'vs-light',
+		  automaticLayout: true,
+		  folding: true,
+		  lineNumbers: 'on',
+		  minimap: {
+		    enabled: true
+		  },
+		  wordWrap: 'on',
+		  wrappingIndent: 'same',
+		  scrollBeyondLastLine: false
+		});
+            });
+
+            window.onload = function() {
+		const today = new Date();
+		const formattedDate = today.toISOString().split('T')[0]; // 'YYYY-MM-DD' format
+
+		monacoEditor.setValue(jsonData.page.content || "Nothing to display");
+		document.getElementById("author").value = jsonData.page.authorName || "";
+		document.getElementById("date").value = formattedDate;
+		document.getElementById("title").value = jsonData.page.title || "";
+		document.getElementById("document-id").value = "2025_P_SS_DOC";
+		document.getElementById("template").value = "space-race";
+
+                const tabs = document.querySelectorAll('.tab');
+                const contents = document.querySelectorAll('.tab-content');
+
+                tabs.forEach((tab, index) => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        contents.forEach(content => content.classList.remove('active'));
+                        tab.classList.add('active');
+                        contents[index].classList.add('active');
+
+                        // Trigger Monaco Editor layout update when switching to Markdown tab
+                        if (index === 1 && monacoEditor) {
+                            monacoEditor.layout();
+			} else if (index === 2 && latexEditor) {
+			    latexEditor.layout()
+			}
+
+                    });
+                });
+
+		// Initialize Flatpickr for the date input field
+		flatpickr("#date", {
+		    dateFormat: "d-m-Y",  // Format: dd-mm-yyyy
+		});
+
+            };
+
+
+	    // Add function to get metadata for document conversion
+	    function getPageMetadata(pagePath) {
+		return pageMetadata[pagePath] || {
+		    author: '',
+		    title: '',
+		    date: new Date().toISOString().split('T')[0],
+		    documentId: '',
+		    template: 'space-race'
+		};
+	    }
+
+	    // Function to update metadata when a user modifies input fields
+	    function updateMetadata(field, value, pagePath) {
+		if (!pageMetadata[pagePath]) {
+		    pageMetadata[pagePath] = {
+			author: '',
+			title: '',
+			date: new Date().toISOString().split('T')[0],
+			documentId: '',
+			template: 'space-race'
+		    };
+		}
+		pageMetadata[pagePath][field] = value;
+		console.log("Updated metadata for", pagePath, ":", pageMetadata[pagePath]);
+	    }
+
+	    // Attach event listeners to fields to capture changes
+	    function attachMetadataListeners(pagePath) {
+		document.getElementById("author").addEventListener("input", (e) => {
+		    updateMetadata("author", e.target.value, pagePath);
+		});
+		document.getElementById("date").addEventListener("change", (e) => {
+		    updateMetadata("date", e.target.value, pagePath);
+		});
+		document.getElementById("title").addEventListener("input", (e) => {
+		    updateMetadata("title", e.target.value, pagePath);
+		});
+		document.getElementById("document-id").addEventListener("input", (e) => {
+		    updateMetadata("documentId", e.target.value, pagePath);
+		});
+		document.getElementById("template").addEventListener("change", (e) => {
+		    updateMetadata("template", e.target.value, pagePath);
+		});
+	    }
+
+	    // Load page-specific metadata into fields when a page is selected
+	    function loadMetadata(pagePath) {
+		const metadata = pageMetadata[pagePath] || {};
+		document.getElementById("author").value = metadata.author || "";
+		document.getElementById("date").value = metadata.date || "";
+		document.getElementById("title").value = metadata.title || "";
+		document.getElementById("document-id").value = metadata.documentId || "";
+		document.getElementById("template").value = metadata.template || "space-race";
+	    }
+
+            // Load Markdown content based on page selection
+            function loadMarkdownContent(index) {
+                const path = selectedPages[index];
+                if (monacoEditor) {
+                    monacoEditor.setValue(pageContents[path] || 'No content loaded');
+                }
+		loadMetadata(path);  // Load existing metadata into fields
+		attachMetadataListeners(path);  // Attach listeners to update metadata on change
+		// Layout update for Monaco editor
+		if (monacoEditor) {
+		    monacoEditor.layout();
+		}
+            }
+
+	    function getMarkdownContent() {
+	      if (monacoEditor) {
+		return monacoEditor.getValue();
+	      } else {
+		return '';
+	      }
+	    }
+
+            // Update page selectors on tabs 2, 3, and 4
+            function updatePageSelectors() {
+                const selectors = document.querySelectorAll('#markdown-page-selector, #document-code-selector, #pdf-selector');
+
+                selectors.forEach(selector => {
+                    selector.innerHTML = ''; // Clear existing options
+                    selectedPages.forEach((pagePath, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        // Label format: "Page N: path/to/page" or just "Page N" if path is empty
+                        option.textContent = `Page ${index + 1}${pagePath ? `: ${pagePath}` : ''}`;
+                        selector.appendChild(option);
+                    });
+                });
+            }
+
+	    const convertButton = document.getElementById('convert-button');
+	    convertButton.addEventListener('click', () => {
+            convertButton.innerHTML = 'Converting...';
+            convertButton.disabled = true;
+            // Get the necessary values
+            const markdownContent = getMarkdownContent();
+            const author = document.getElementById('author').value;
+            const date = document.getElementById('date').value;
+            const title = document.getElementById('title').value;
+            const documentId = document.getElementById('document-id').value;
+            const template = document.getElementById('template').value;
+            const lineNumbersEnabled = document.getElementById("lineNumbers").checked;
+
+            // Make the fetch request
+            fetch('/convert', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    markdown: markdownContent,
+                    author,
+                    date,
+                    title,
+                    documentId,
+                    template,
+                    lineNumbersEnabled
+                }),
+                })
+            .then((response) => response.json())
+            .then((data) => {
+                convertButton.innerHTML = '<span class="material-icons">code</span> Convert to Document Code';
+                convertButton.disabled = false;
+                if (data.error) {
+                    console.error(data.error);
+                } else {
+                    // Update the Document Code tab with the generated LaTeX content
+                    if (latexEditor) {
+                        latexEditor.setValue(data.latex);
+                    } else {
+                        const documentCodeElement = document.getElementById('document-code');
+                        documentCodeElement.textContent = data.latex;
+                    }
+
+                    const tabs = document.querySelectorAll('.tab');
+                    const contents = document.querySelectorAll('.tab-content');
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(content => content.classList.remove('active'));
+
+                    // Switch to the Document Code tab
+                    tabs[1].classList.add('active');
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents[1].classList.add('active');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                convertButton.innerHTML = '<span class="material-icons">code</span> Convert to Document Code';
+                convertButton.disabled = false;
+            });
+	    });
+
+        // Assume you have a reference to the "Compile PDF" button
+        const compileButton = document.getElementById('compile-button');
+
+        compileButton.addEventListener('click', () => {
+            compileButton.innerHTML = 'Compiling...';
+            compileButton.disabled = true;
+            // Get the LaTeX code from the code editor
+            const latexCode = getLatexCodeFromEditor();
+
+            // Make a POST request to the /generate-pdf endpoint
+            fetch('/generate-pdf', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+            body: JSON.stringify({ latex_code: latexCode })
+            })
+            .then(response => {
+                compileButton.innerHTML = '<span class="material-icons">picture_as_pdf</span> Compile PDF';
+                compileButton.disabled = false;
+                if (response.ok) {
+                    // The PDF was generated successfully
+                    // Display the PDF in the 4th tab
+                    console.log("trying displayPdfPreview")
+                    response.blob().then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        displayPdfPreview(url); // Pass the URL to the function
+                    });
+                } else {
+                    // Handle the error
+                    response.json().then(json => {
+                        console.error(json.message);
+                        document.getElementById('compiler-output').textContent = json.message;
+
+                        // Unselect other tabs
+                        const tabs = document.querySelectorAll('.tab');
+                        const contents = document.querySelectorAll('.tab-content');
+                        tabs.forEach(t => t.classList.remove('active'));
+                        contents.forEach(content => content.classList.remove('active'));
+
+                        // Switch to the Generated PDF tab
+                        tabs[2].classList.add('active');
+                        const tabContents = document.querySelectorAll('.tab-content');
+                        tabContents[2].classList.add('active');
+                    })
+                    // Display an error message to the user
+                }
+            })
+            .catch(error => {
+                console.error('Error generating PDF:', error);
+                compileButton.innerHTML = '<span class="material-icons">picture_as_pdf</span> Compile PDF';
+                compileButton.disabled = false;
+            });
+        });
+
+        function getLatexCodeFromEditor() {
+            if (latexEditor) {
+		        return latexEditor.getValue();
+	        } else {
+		        return '';
+	        }
+	    }
+
+        function displayPdfPreview(url) {
+            document.getElementById('compiler-output').textContent = ""; // clear compiler output
+
+            const pdfPreviewElement = document.getElementById('pdf-preview')
+
+            const downloadButton = document.getElementById('download-button');
+
+            downloadButton.addEventListener('click', () => {
+                const title = document.getElementById('title').value;
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            })
+
+            // Set the iframe's src to the object URL
+            pdfPreviewElement.src = url;
+
+            //window.URL.revokeObjectURL(url);
+
+            // Unselect other tabs
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Switch to the Generated PDF tab
+            tabs[2].classList.add('active');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents[2].classList.add('active');
+
+        }
+
+	function retrieveAccessToken() {
+	    console.log("Hello World");
+
+	    const wikiUrl = document.getElementById('wiki-url').value.trim() + "/graphql";
+        console.log(wikiUrl)
+
+	    const email = document.getElementById('email').value;
+	    const password = document.getElementById('password').value;
+
+	    loginToGraphQL(email, password, wikiUrl).then(response => {
+            document.getElementById("access-token").value = response;
+        })
+	}
+
+    async function loginToGraphQL(username, password, endpointUrl) {
+        try {
+            const response = await fetch('/get-access-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, endpointUrl })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Access token retrieved:', data.token); // Assuming the response includes a `token` field
+            return data.token;
+        } catch (error) {
+            console.error('Error logging in:', error.message);
+        }
+    }
+
+	  /*const query = `
+	    mutation {
+	      authentication {
+		login(
+		  username: "${username}",
+		  password: "${password}",
+		  strategy: "local"
+		) {
+		  jwt
+		}
+	      }
+	    }
+	  `;
+
+	  try {
+	    const response = await fetch(endpointUrl, {
+	      method: 'POST',
+	      headers: {
+		'Content-Type': 'application/json',
+	      },
+	      body: JSON.stringify({ query }),
+	    });
+
+	    const result = await response.json();
+
+	    if (response.ok && result.data) {
+	      console.log('JWT:', result.data.authentication.login.jwt);
+	      return result.data.authentication.login.jwt;
+	    } else {
+	      console.error('Error:', result.errors || 'Unknown error');
+	    }
+	  } catch (error) {
+	    console.error('Network Error:', error);
+	  }
+	}
+
+	// Example usage
+	// Replace these placeholders with your values
+	const username = 'your-username';
+	const password = 'your-password';
+	const endpointUrl = 'https://your-graphql-endpoint.com/graphql';
+
+	loginToGraphQL(username, password, endpointUrl)
+	  .then(jwt => {
+	    if (jwt) {
+	      console.log('Logged in successfully, JWT:', jwt);
+	    }
+	  });
+        */
+        </script>
+    </div>
+</body>
+</html>
