@@ -157,6 +157,10 @@ $endif$
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
+% Add a rownumber counter
+\newcounter{rownumbers}
+\newcommand\rownumber{\stepcounter{rownumbers}\arabic{rownumbers}}
+
 % Handle pandoc's title and doc_id variables
 \newcommand{\doctitle}{$title$}
 \newcommand{\docid}{$documentId$}
