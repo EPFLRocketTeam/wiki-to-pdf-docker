@@ -124,6 +124,23 @@ local box_styles = {
     border_color = "wikiDefaultQuoteBorder",
     icon_latex = "\\textcolor{wikiDefaultQuoteIcon}{\\faQuoteLeft}\\ "
   },
+  ["links-list"] = {
+    bg_color = "white",
+    border_color = "lightgray",
+    icon_latex = "", -- No icon for a list
+    custom_tcb_options = {
+      "boxsep=5pt",
+      "arc=4pt",
+      "boxrule=0.5pt",
+      "leftrule=2pt",
+      "rightrule=0pt",
+      "toprule=0pt",
+      "bottomrule=0pt",
+      "sharp corners",
+      "nobeforeafter",
+      "breakable"
+    }
+  },
 }
 
 local base_tcb_options = {
@@ -229,4 +246,66 @@ function BlockQuote(el)
   table.insert(output_blocks, pandoc.RawBlock('latex', end_tcolorbox))
 
   return output_blocks
+end
+
+-- NEW: Filter for BulletLists
+function BulletList(el)
+  local apply_links_list_style = false
+  local suffix_to_remove_from_str = nil
+  local class_name_from_str = nil
+
+  -- Step 1: Check if the {.links-list} is present as a string in the last item
+  if #el.content > 0 then -- Check if there are list items
+    local last_list_item = el.content[#el.content] -- Get the last list item
+
+    -- A list item itself is a list of blocks. Usually, it's just one 'Plain' or 'Para' block.
+    if #last_list_item > 0 then
+      local last_block_in_item = last_list_item[#last_list_item]
+
+      -- Check if the last block in the item is a Plain or Para and has inlines
+      if (last_block_in_item.tag == "Plain" or last_block_in_item.tag == "Para") and #last_block_in_item.content > 0 then
+        local last_inline_in_item = last_block_in_item.content[#last_block_in_item.content]
+
+        if last_inline_in_item.tag == "Str" then
+          local original_text = last_inline_in_item.text
+          local expected_suffix = "{.links-list}"
+
+          if original_text:sub(-#expected_suffix) == expected_suffix then
+            apply_links_list_style = true
+            class_name_from_str = "links-list"
+            suffix_to_remove_from_str = expected_suffix
+            -- Remove the suffix from the string
+            last_inline_in_item.text = original_text:sub(1, #original_text - #suffix_to_remove_from_str)
+          end
+        end
+      end
+    end
+  end
+
+  -- Step 2: Apply styling if the "links-list" class was detected and processed
+  if apply_links_list_style then
+    local current_style = box_styles["links-list"]
+
+    local current_tcb_options = {}
+    local options_to_use = current_style.custom_tcb_options or base_tcb_options
+    for _, opt in ipairs(options_to_use) do
+      table.insert(current_tcb_options, opt)
+    end
+
+    table.insert(current_tcb_options, "colback=" .. current_style.bg_color)
+    table.insert(current_tcb_options, "colframe=" .. current_style.border_color)
+
+    local begin_tcolorbox = "\\begin{tcolorbox}[" .. table.concat(current_tcb_options, ",") .. "]\n"
+    local end_tcolorbox = "\\end{tcolorbox}\n"
+
+    -- Return a sequence of blocks: the tcolorbox begin, the original BulletList, and the tcolorbox end
+    return {
+      pandoc.RawBlock('latex', begin_tcolorbox),
+      el, -- The original BulletList element itself (now with the suffix removed from its last item)
+      pandoc.RawBlock('latex', end_tcolorbox)
+    }
+  end
+
+  -- If no specific class "links-list" was found/processed, return nil to let Pandoc render the list normally.
+  return nil
 end
