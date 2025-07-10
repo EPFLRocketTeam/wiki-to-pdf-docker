@@ -8,16 +8,34 @@ services:
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
-    network_mode: "host"
+      # Add Redis host and port for the Flask app
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379 # This must match the host port mapped for Redis
+    network_mode: "host" # Keep web on host network
     restart: unless-stopped
-    networks:
-      - default
-      - nginx-proxy
     volumes:
-      - ~/.ssh:/root/.ssh:ro  # Mount SSH keys
+      - .ssh:/root/.ssh:ro  # Mount SSH keys
       - ./ert_wiki:/app/ert_wiki  # Mount the repo directory
+    # Note: When using network_mode: "host", services cannot directly
+    # communicate by their Docker Compose service names (e.g., 'redis').
+    # They must use 'localhost' and the exposed port.
+
+  redis:
+    image: "redis:7-alpine" # Using a lightweight Redis image
+    container_name: my_redis_server # Optional: give it a specific name
+    ports:
+      - "6379:6379" # Map Redis's default port to the host machine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data # Persist Redis data
+    # Redis doesn't need to be on the 'nginx-proxy' network
+    # unless it's directly exposed via Nginx, which is unlikely.
+    # It will be on the default bridge network by default.
 
 networks:
   nginx-proxy:
     external:
       name: nginx-proxy
+
+volumes:
+  redis_data: # Define a named volume for Redis data persistence
