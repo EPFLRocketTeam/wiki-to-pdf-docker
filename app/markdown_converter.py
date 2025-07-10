@@ -41,7 +41,8 @@ class MarkdownConverter:
                 "--standalone",
                 "--from", "markdown",
                 "--to", "latex",
-                "--lua-filter", "/app/ImageLuaFilter.lua"
+                "--lua-filter", "/app/ImageLuaFilter.lua",
+                "--variable", "code-block-environment=minted"
             ]
             
             # Add template if specified
