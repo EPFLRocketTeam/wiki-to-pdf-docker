@@ -141,41 +141,87 @@ local base_tcb_options = {
 
 function BlockQuote(el)
   local found_style_key = "default_blockquote_style"
+  local class_detected_and_processed = false
 
+  -- Step 1: Check for standard block-level attributes (unlikely given user's input, but good practice)
   if el.attributes and el.attributes.classes then
-    for i, class in ipairs(el.attributes.classes) do
-      if box_styles[class] then
-        found_style_key = class
+    for _, class_name in ipairs(el.attributes.classes) do
+      if box_styles[class_name] then
+        found_style_key = class_name
+        class_detected_and_processed = true
         break
+      end
+    end
+  end
+
+  -- Step 2: If no standard block class found, scan the content for the literal `{.class}` string pattern
+  if not class_detected_and_processed and #el.content > 0 then
+    local first_block = el.content[1] -- Get the first block (e.g., a Paragraph)
+
+    -- Assuming the class marker is at the end of the text in the LAST inline element of the first paragraph
+    if first_block.tag == "Para" and #first_block.content > 0 then
+      local last_inline = first_block.content[#first_block.content] -- Get the last inline element
+
+      if last_inline.tag == "Str" then -- Check if it's a string element
+        local original_text = last_inline.text
+        local detected_class = nil
+        local suffix_to_remove = nil
+
+        -- Iterate through known classes to find a match as a suffix in the string
+        for class_name, _ in pairs(box_styles) do
+          if class_name ~= "default_blockquote_style" then -- Don't try to match the default style as a suffix
+            suffix_to_remove = "{." .. class_name .. "}"
+            -- Check if the original_text ends with the current suffix_to_remove
+            if original_text:sub(-#suffix_to_remove) == suffix_to_remove then
+              detected_class = class_name
+              break -- Found a match, no need to check other classes
+            end
+          end
+        end
+
+        if detected_class then
+          found_style_key = detected_class
+          class_detected_and_processed = true
+
+          -- Remove the detected `{.class}` suffix from the string
+          -- original_text:sub(1, #original_text - #suffix_to_remove) takes the substring from char 1 up to the point just before the suffix
+          last_inline.text = original_text:sub(1, #original_text - #suffix_to_remove)
+        end
       end
     end
   end
 
   local current_style = box_styles[found_style_key]
 
+  -- Construct tcolorbox options
   local current_tcb_options = {}
-  for i, opt in ipairs(base_tcb_options) do
+  for _, opt in ipairs(base_tcb_options) do
     table.insert(current_tcb_options, opt)
   end
-
   table.insert(current_tcb_options, "colback=" .. current_style.bg_color)
   table.insert(current_tcb_options, "colframe=" .. current_style.border_color)
 
   local begin_tcolorbox = "\\begin{tcolorbox}[" .. table.concat(current_tcb_options, ",") .. "]\n"
   local end_tcolorbox = "\\end{tcolorbox}\n"
 
+  -- Build the list of blocks to replace the original blockquote
   local output_blocks = pandoc.List:new{}
   table.insert(output_blocks, pandoc.RawBlock('latex', begin_tcolorbox))
 
+  -- Add the icon to the first actual content block
   if #el.content > 0 and current_style.icon_latex then
-      local first_block = el.content[1]
-      if first_block.tag == "Para" then
-          table.insert(first_block.content, 1, pandoc.RawInline('latex', current_style.icon_latex))
+      local first_real_block = el.content[1]
+      -- Ensure it's a paragraph before trying to insert into its inlines
+      if first_real_block.tag == "Para" then
+          -- Insert the icon at the beginning of the first paragraph's inlines
+          table.insert(first_real_block.content, 1, pandoc.RawInline('latex', current_style.icon_latex))
       else
+          -- If the first block isn't a paragraph, insert the icon as a new paragraph before the content
           table.insert(output_blocks, pandoc.Para({pandoc.RawInline('latex', current_style.icon_latex)}))
       end
   end
 
+  -- Add the original blockquote content (now potentially modified with icon and the suffix removed)
   for _, block_item in ipairs(el.content) do
       table.insert(output_blocks, block_item)
   end
