@@ -8,7 +8,7 @@ services:
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis-wiki-to-pdf
       - REDIS_PORT=6379
     restart: unless-stopped
     networks:
@@ -20,7 +20,7 @@ services:
 
   redis:
     image: "redis:7-alpine"
-    container_name: my_redis_server
+    container_name: redis-wiki-to-pdf
     restart: unless-stopped
     volumes:
       - redis_data:/data
