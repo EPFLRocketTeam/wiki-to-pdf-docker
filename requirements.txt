@@ -4,4 +4,4 @@ gunicorn>=22.0.0
 pypandoc-binary==1.14
 requests==2.32.0
 Pygments==2.18.0
-redis==5.0.0
+redis>=5.0.0
