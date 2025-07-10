@@ -35,13 +35,40 @@
 \usepackage{fancyhdr}
 \usepackage{fancyvrb}
 \usepackage{minted}
-\usepackage{tcolorbox}
+\usepackage[most]{tcolorbox}
+\usepackage{fontawesome5}
 
 $if(lineNumbers)$
 \usepackage{lineno}
 \renewcommand\linenumberfont{\tiny\rmfamily\color{gray!70}} % Set line numbers to small font size
 \linenumbers
 $endif$
+
+% Define custom colors to match Wiki.js themes
+% Info (Blue)
+\definecolor{wikiInfoBg}{HTML}{DFECF8}
+\definecolor{wikiInfoBorder}{HTML}{3A8CD1}
+\definecolor{wikiInfoIcon}{HTML}{3A8CD1} % Added for icon color
+
+% Success (Green)
+\definecolor{wikiSuccessBg}{HTML}{EDF8ED}
+\definecolor{wikiSuccessBorder}{HTML}{4CAF50}
+\definecolor{wikiSuccessIcon}{HTML}{4CAF50} % Added for icon color
+
+% Warning (Orange/Yellow)
+\definecolor{wikiWarningBg}{HTML}{FFF4EB}
+\definecolor{wikiWarningBorder}{HTML}{FF9800}
+\definecolor{wikiWarningIcon}{HTML}{FF9800} % Added for icon color
+
+% Error (Red)
+\definecolor{wikiErrorBg}{HTML}{FCEBEC}
+\definecolor{wikiErrorBorder}{HTML}{F44336}
+\definecolor{wikiErrorIcon}{HTML}{F44336} % Added for icon color
+
+% Default Blockquote (Gray)
+\definecolor{wikiDefaultQuoteBg}{HTML}{EEEEEE}
+\definecolor{wikiDefaultQuoteBorder}{HTML}{AAAAAA}
+\definecolor{wikiDefaultQuoteIcon}{HTML}{AAAAAA} % Added for icon color
 
 \newcommand{\colora}{black}
 \newcommand{\colorb}{red}
