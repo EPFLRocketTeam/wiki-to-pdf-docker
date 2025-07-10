@@ -97,3 +97,90 @@ function Image(elem)
   local latex_code = string.format("\\includegraphics[width=\\linewidth, height=\\textheight, keepaspectratio]{%s}", src)
   return pandoc.RawInline("latex", latex_code)
 end
+
+local box_styles = {
+  ["is-info"] = {
+    bg_color = "wikiInfoBg",
+    border_color = "wikiInfoBorder",
+    icon_latex = "\\textcolor{wikiInfoIcon}{\\faInfoCircle}\\ "
+  },
+  ["is-success"] = {
+    bg_color = "wikiSuccessBg",
+    border_color = "wikiSuccessBorder",
+    icon_latex = "\\textcolor{wikiSuccessIcon}{\\faCheckCircle}\\ "
+  },
+  ["is-warning"] = {
+    bg_color = "wikiWarningBg",
+    border_color = "wikiWarningBorder",
+    icon_latex = "\\textcolor{wikiWarningIcon}{\\faExclamationTriangle}\\ "
+  },
+  ["is-error"] = {
+    bg_color = "wikiErrorBg",
+    border_color = "wikiErrorBorder",
+    icon_latex = "\\textcolor{wikiErrorIcon}{\\faTimesCircle}\\ "
+  },
+  ["default_blockquote_style"] = {
+    bg_color = "wikiDefaultQuoteBg",
+    border_color = "wikiDefaultQuoteBorder",
+    icon_latex = "\\textcolor{wikiDefaultQuoteIcon}{\\faQuoteLeft}\\ "
+  },
+}
+
+local base_tcb_options = {
+  "boxsep=5pt",
+  "arc=4pt",
+  "boxrule=1pt",
+  "leftrule=5pt",
+  "rightrule=0pt",
+  "toprule=0pt",
+  "bottomrule=0pt",
+  "sharp corners",
+  "nobeforeafter",
+  "breakable"
+}
+
+function BlockQuote(el)
+  local found_style_key = "default_blockquote_style"
+
+  if el.attributes and el.attributes.classes then
+    for i, class in ipairs(el.attributes.classes) do
+      if box_styles[class] then
+        found_style_key = class
+        break
+      end
+    end
+  end
+
+  local current_style = box_styles[found_style_key]
+
+  local current_tcb_options = {}
+  for i, opt in ipairs(base_tcb_options) do
+    table.insert(current_tcb_options, opt)
+  end
+
+  table.insert(current_tcb_options, "colback=" .. current_style.bg_color)
+  table.insert(current_tcb_options, "colframe=" .. current_style.border_color)
+
+  local begin_tcolorbox = "\\begin{tcolorbox}[" .. table.concat(current_tcb_options, ",") .. "]\n"
+  local end_tcolorbox = "\\end{tcolorbox}\n"
+
+  local output_blocks = pandoc.List:new{}
+  table.insert(output_blocks, pandoc.RawBlock('latex', begin_tcolorbox))
+
+  if #el.content > 0 and current_style.icon_latex then
+      local first_block = el.content[1]
+      if first_block.tag == "Para" then
+          table.insert(first_block.content, 1, pandoc.RawInline('latex', current_style.icon_latex))
+      else
+          table.insert(output_blocks, pandoc.Para({pandoc.RawInline('latex', current_style.icon_latex)}))
+      end
+  end
+
+  for _, block_item in ipairs(el.content) do
+      table.insert(output_blocks, block_item)
+  end
+
+  table.insert(output_blocks, pandoc.RawBlock('latex', end_tcolorbox))
+
+  return output_blocks
+end
