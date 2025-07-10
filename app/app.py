@@ -335,8 +335,10 @@ def generate_pdf():
 
     return send_file(pdf_file_path, mimetype='application/pdf', as_attachment=True)
 
-# Connect to Redis (replace with your own settings)
-redis_client = redis.StrictRedis(host='some-redis', port=6379, db=0, decode_responses=True)
+# Connect to Redis
+redis_host = os.getenv('REDIS_HOST', 'some-redis') # Default to localhost for local dev
+redis_port = int(os.getenv('REDIS_PORT', 6379)) # Default to 6379
+redis_client = redis.StrictRedis(host=redis_host, port=6379, db=0, decode_responses=True)
 
 @app.route('/store', methods=['POST'])
 def store_data():
