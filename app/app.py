@@ -7,6 +7,7 @@ import subprocess
 import uuid
 import redis
 import json
+import os
 from flask_cors import CORS
 from markdown_converter import MarkdownConverter, ConversionError
 from page_data_manager import PageDataManager, PageMetadata
