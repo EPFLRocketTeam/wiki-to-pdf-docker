@@ -154,6 +154,15 @@
             border: 1px solid #ddd;
             margin: 20px 0;
         }
+
+        .button.overleaf {
+            background-color: #4E8A5E; /* Overleaf Green */
+        }
+
+        .button.overleaf:hover {
+            background-color: #3f704b; /* A slightly darker green for hover */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
@@ -369,7 +378,7 @@
                     const encodedZipUri = encodeURIComponent(zipUri);
                     const encodedTitle = encodeURIComponent(title);
 
-                    const overleafUrl = `https://www.overleaf.com/project/new?snip_uri[]=${encodedZipUri}&mainFile=main.tex&title=${encodedTitle}`;
+                    const overleafUrl = `https://www.overleaf.com/project/new?snip_uri[]=${encodedZipUri}`;
 
                     window.open(overleafUrl, '_blank');
                 });
