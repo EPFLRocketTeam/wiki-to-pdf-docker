@@ -396,7 +396,7 @@ def convert_markdown():
         # 4. Store the path to the ZIP in Redis, associated with a session_id
         session_id = str(uuid.uuid4())
         redis_client.set(f"zip_project:{session_id}", zip_file_path) # Store path to the zip
-        redis_client.expire(f"zip_project:{session_id}", 300) # Expire in 5 minutes
+        redis_client.expire(f"zip_project:{session_id}", 600) # Expire in 10 minutes
 
         # 5. Clean up the temporary directory after zipping (optional, but good)
         shutil.rmtree(project_temp_path)
