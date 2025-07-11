@@ -354,10 +354,57 @@ def convert_markdown():
             template=template,
             metadata=metadata
         )
+        
+        # 1. Create a unique temporary directory
+        temp_dir_name = str(uuid.uuid4())
+        project_temp_path = os.path.join(tempfile.gettempdir(), temp_dir_name)
+        os.makedirs(project_temp_path)
+
+        main_tex_path = os.path.join(project_temp_path, 'main.tex')
+        with open(main_tex_path, 'w') as f:
+            f.write(latex_content)
+
+        # 2. **CRITICAL STEP:** Identify and copy/generate all external assets
+        #    This is the most complex part and depends on how your markdown converter
+        #    handles images/drawio, and where those files are stored in your Wiki.js.
+        #    You would parse 'latex_content' to find image/include paths,
+        #    then fetch those files from Wiki.js (if remote) or copy from local storage
+        #    into 'project_temp_path'.
+
+        #    Example (placeholder for your logic):
+        #    For each image_path in latex_content:
+        #        source_image_path = resolve_wiki_image_path(image_path)
+        #        if source_image_path:
+        #            shutil.copy(source_image_path, os.path.join(project_temp_path, os.path.basename(image_path)))
+
+        # 3. Create a ZIP archive
+        zip_file_name = f"{temp_dir_name}.zip"
+        zip_file_path = os.path.join(tempfile.gettempdir(), zip_file_name)
+
+        # Create the zip from the contents of project_temp_path
+        # The base directory will be temp_dir_name, which is fine as Overleaf unpacks it
+        shutil.make_archive(
+            os.path.join(tempfile.gettempdir(), temp_dir_name), # Base name for the archive
+            'zip',                                              # Archive format
+            project_temp_path                                   # Directory to archive
+        )
+        # Rename it to .zip if make_archive doesn't add it (it usually does for 'zip')
+        if not zip_file_path.endswith('.zip'):
+            zip_file_path = zip_file_path + '.zip'
+
+
+        # 4. Store the path to the ZIP in Redis, associated with a session_id
+        session_id = str(uuid.uuid4())
+        redis_client.set(f"zip_project:{session_id}", zip_file_path) # Store path to the zip
+        redis_client.expire(f"zip_project:{session_id}", 300) # Expire in 5 minutes
+
+        # 5. Clean up the temporary directory after zipping (optional, but good)
+        shutil.rmtree(project_temp_path)
 
         return jsonify({
             'latex': latex_content,
-            'status': 'success'
+            'status': 'success',
+            'session_id': session_id
         })
 
     except ConversionError as e:
