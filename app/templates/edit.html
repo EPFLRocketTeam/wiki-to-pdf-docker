@@ -372,16 +372,20 @@
                         return;
                     }
 
+                    const title = document.getElementById('title').value || 'Wiki Document';
                     const baseUrl = window.location.origin;
 
                     const zipUri = `${baseUrl}/serve-zip-project/${currentSessionId}`;
                     const encodedZipUri = encodeURIComponent(zipUri);
 
-                    const overleafUrl = `https://www.overleaf.com/docs?snip_uri[]=${encodedZipUri}`;
+                    const mainTexFileName = 'main.tex';
+                    const encodedMainTexFileName = encodeURIComponent(mainTexFileName);
+                    const encodedTitle = encodeURIComponent(title);
+
+                    const overleafUrl = `https://www.overleaf.com/project/new?snip_uri[]=${encodedZipUri}&main_document=${encodedMainTexFileName}&title=${encodedTitle}`;
 
                     window.open(overleafUrl, '_blank');
                 });
-
             };
 
 
