@@ -382,7 +382,7 @@
                     const encodedMainTexFileName = encodeURIComponent(mainTexFileName);
                     const encodedTitle = encodeURIComponent(title);
 
-                    const overleafUrl = `https://www.overleaf.com/project/new?snip_uri[]=${encodedZipUri}&main_document=${encodedMainTexFileName}&title=${encodedTitle}`;
+                    const overleafUrl = `https://www.overleaf.com/docs?snip_uri[]=${encodedZipUri}&main_document=${encodedMainTexFileName}&title=${encodedTitle}`;
 
                     window.open(overleafUrl, '_blank');
                 });
