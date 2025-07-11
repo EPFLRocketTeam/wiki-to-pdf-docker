@@ -155,11 +155,11 @@
             margin: 20px 0;
         }
 
-        .button.overleaf {
+        #edit-overleaf-button {
             background-color: #4E8A5E; /* Overleaf Green */
         }
 
-        .button.overleaf:hover {
+        #edit-overleaf-button:hover {
             background-color: #3f704b; /* A slightly darker green for hover */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
@@ -371,14 +371,12 @@
                         return;
                     }
 
-                    const title = document.getElementById('title').value || 'Wiki Document';
                     const baseUrl = window.location.origin;
 
                     const zipUri = `${baseUrl}/serve-zip-project/${currentSessionId}`;
                     const encodedZipUri = encodeURIComponent(zipUri);
-                    const encodedTitle = encodeURIComponent(title);
 
-                    const overleafUrl = `https://www.overleaf.com/project/new?snip_uri[]=${encodedZipUri}`;
+                    const overleafUrl = `https://www.overleaf.com/docs?snip_uri[]=${encodedZipUri}`;
 
                     window.open(overleafUrl, '_blank');
                 });
