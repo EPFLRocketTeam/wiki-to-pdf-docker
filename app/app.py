@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_file, session
+from flask import Flask, request, jsonify, render_template, send_file, session, send_from_directory
 from datetime import datetime
 from urllib.parse import urlparse
 import requests
@@ -8,9 +8,13 @@ import uuid
 import redis
 import json
 import os
+import shutil
+import tempfile
+import zipfile
 from flask_cors import CORS
 from markdown_converter import MarkdownConverter, ConversionError
 from page_data_manager import PageDataManager, PageMetadata
+
 
 app = Flask(__name__)
 CORS(app, origins=["https://rocket-team.epfl.ch"])
@@ -234,40 +238,6 @@ def fetch_content():
     except Exception as e:
         return jsonify({'error': f"Failed to fetch content: {str(e)}"}), 500
 
-@app.route('/convert', methods=['POST'])
-def convert_markdown():
-    try:
-        data = request.json
-        markdown_content = data.get('markdown')
-        filtered_markdown_content= filter_text(markdown_content) #filter the content to convert it properly to latex
-        template = data.get('template', 'default')
-        metadata = {
-            'author': data.get('author', ''),
-            'date': data.get('date', datetime.now().strftime('%Y-%m-%d')),
-            'title': data.get('title', ''),
-            'documentId': data.get('documentId', ''),
-            'lineNumbers': data.get('lineNumbersEnabled', False)
-        }
-
-        if not markdown_content:
-            return jsonify({'error': 'No markdown content provided'}), 400
-
-        latex_content = converter.convert_to_latex(
-            filtered_markdown_content,
-            template=template,
-            metadata=metadata
-        )
-
-        return jsonify({
-            'latex': latex_content,
-            'status': 'success'
-        })
-
-    except ConversionError as e:
-        return jsonify({'error': str(e)}), 500
-    except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
 @app.route('/get-access-token', methods=['POST'])
 def get_access_token():
     try:
@@ -360,6 +330,65 @@ def edit_page():
 
     data = redis_client.get(session_id)
     return render_template("edit.html", data=data)  # Pass to frontend
+
+@app.route('/convert', methods=['POST'])
+def convert_markdown():
+    try:
+        data = request.json
+        markdown_content = data.get('markdown')
+        filtered_markdown_content= filter_text(markdown_content) #filter the content to convert it properly to latex
+        template = data.get('template', 'default')
+        metadata = {
+            'author': data.get('author', ''),
+            'date': data.get('date', datetime.now().strftime('%Y-%m-%d')),
+            'title': data.get('title', ''),
+            'documentId': data.get('documentId', ''),
+            'lineNumbers': data.get('lineNumbersEnabled', False)
+        }
+
+        if not markdown_content:
+            return jsonify({'error': 'No markdown content provided'}), 400
+
+        latex_content = converter.convert_to_latex(
+            filtered_markdown_content,
+            template=template,
+            metadata=metadata
+        )
+
+        return jsonify({
+            'latex': latex_content,
+            'status': 'success'
+        })
+
+    except ConversionError as e:
+        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+@app.route('/serve-zip-project/<session_id>', methods=['GET'])
+def serve_zip_project_for_overleaf(session_id):
+    zip_file_path = redis_client.get(f"zip_project:{session_id}")
+
+    if not zip_file_path or not os.path.exists(zip_file_path):
+        return "Project ZIP file not found or expired.", 404
+
+    directory = os.path.dirname(zip_file_path)
+    filename = os.path.basename(zip_file_path)
+
+    # Use send_from_directory to correctly serve the file
+    # Overleaf will look for a ZIP, so mimetype is important
+    response = send_from_directory(directory, filename, as_attachment=True, mimetype='application/zip')
+
+    # Clean up the zip file immediately after serving it
+    @response.call_on_close
+    def cleanup_zip():
+        try:
+            os.remove(zip_file_path)
+            print(f"Cleaned up zip file: {zip_file_path}")
+        except Exception as e:
+            print(f"Error cleaning up zip file {zip_file_path}: {e}")
+
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)
