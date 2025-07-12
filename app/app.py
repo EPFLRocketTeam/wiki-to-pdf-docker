@@ -343,6 +343,7 @@ def convert_markdown():
             'date': data.get('date', datetime.now().strftime('%Y-%m-%d')),
             'title': data.get('title', ''),
             'documentId': data.get('documentId', ''),
+            'footerText': data.get('footerText', ''),
             'lineNumbers': data.get('lineNumbersEnabled', False)
         }
 

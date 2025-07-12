@@ -196,6 +196,9 @@
             <label for="document-id">Document ID:</label>
             <input type="text" id="document-id" name="document-id" placeholder="e.g., 202X_P_SS_DOC" />
 
+            <label for="footer-text">Footer text:</label>
+            <input type="text" id="footer-text" name="footer-text" value="- All rights reserved" />
+
             <h3>Document Formatting Options</h3>
             <!--label for="markup">Markup Language:</label>
             <select id="markup" name="markup">
@@ -493,6 +496,7 @@
                 const date = document.getElementById('date').value;
                 const title = document.getElementById('title').value;
                 const documentId = document.getElementById('document-id').value;
+                const footerText = document.getElementById('footer-text').value;
                 const template = document.getElementById('template').value;
                 const lineNumbersEnabled = document.getElementById("lineNumbers").checked;
 
@@ -508,6 +512,7 @@
                         date,
                         title,
                         documentId,
+                        footerText,
                         template,
                         lineNumbersEnabled
                     }),
