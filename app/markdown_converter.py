@@ -2,6 +2,7 @@ from typing import Dict, Optional
 import pypandoc
 import os
 import tempfile
+import yaml
 
 class MarkdownConverter:
     def __init__(self):
@@ -32,9 +33,8 @@ class MarkdownConverter:
             if metadata:
                 metadata_file = os.path.join(temp_dir, "metadata.yaml")
                 with open(metadata_file, "w") as f:
-                    for key, value in metadata.items():
-                        f.write(f"{key}: {value}\n")
-                    f.write(f"assetsDirectory: {os.path.dirname(os.path.realpath(__file__))}/latex_templates/template_images\n")
+                    yaml.dump(metadata, f, allow_unicode=True, sort_keys=False)
+                    f.write(f"assetsDirectory: \"{os.path.dirname(os.path.realpath(__file__))}/latex_templates/template_images\"\n")
             
             # Set up conversion options
             extra_args = [
