@@ -48,20 +48,20 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN echo "* * * * * cd /app/ert_wiki && git pull "git@github.com:EPFLRocketTeam/ert_wiki.git" > /var/log/cron.log 2>&1" > /etc/cron.d/ert_wiki_cron \
     && chmod 0644 /etc/cron.d/ert_wiki_cron \
     && crontab /etc/cron.d/ert_wiki_cron
-
-# Initialise ssh keys to pull updates from repo
-RUN cd /root/.ssh \
-    && eval "$(ssh-agent -s)" \
-    && ssh-add id_ed25519 \
-    && ssh-add id_rsa \
-    && cd /app/ert_wiki
-
+    
 # Copy application code
 COPY ./app .
 COPY gunicorn.conf.py .
 COPY ./ert_wiki ./ert_wiki
 COPY ImageLuaFilter.lua .
 COPY .ssh /root/.ssh:ro
+    
+# Initialise ssh keys to pull updates from repo
+RUN cd /root/.ssh \
+    && eval "$(ssh-agent -s)" \
+    && ssh-add id_ed25519 \
+    && ssh-add id_rsa \
+    && cd /app/ert_wiki
 
 # Ensure cron runs in the container
 CMD ["sh", "-c", "cron && gunicorn --config gunicorn.conf.py app:app"]
