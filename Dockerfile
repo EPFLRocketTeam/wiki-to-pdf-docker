@@ -55,6 +55,8 @@ COPY gunicorn.conf.py .
 COPY ./ert_wiki ./ert_wiki
 COPY ImageLuaFilter.lua .
 COPY .ssh /root/.ssh:ro
+COPY --chmod=0600 .ssh/id_ed25519 /root/.ssh/id_ed25519
+COPY --chmod=0600 .ssh/id_rsa /root/.ssh/id_rsa
     
 # Initialise ssh keys to pull updates from repo
 RUN cd /root/.ssh \
