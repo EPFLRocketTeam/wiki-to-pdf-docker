@@ -63,7 +63,9 @@ RUN cd /root/.ssh \
     && eval "$(ssh-agent -s)" \
     && ssh-add id_ed25519 \
     && ssh-add id_rsa \
-    && cd /app/ert_wiki
+    && cd /app/ert_wiki \
+    && git config --global --add safe.directory /app/ert_wiki \
+    && git pull
 
 # Ensure cron runs in the container
 CMD ["sh", "-c", "cron && gunicorn --config gunicorn.conf.py app:app"]
