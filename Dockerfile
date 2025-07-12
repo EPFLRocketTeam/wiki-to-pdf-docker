@@ -49,6 +49,13 @@ RUN echo "* * * * * cd /app/ert_wiki && git pull "git@github.com:EPFLRocketTeam/
     && chmod 0644 /etc/cron.d/ert_wiki_cron \
     && crontab /etc/cron.d/ert_wiki_cron
 
+# Initialise ssh keys to pull updates from repo
+RUN cd /root/.ssh \
+    && eval "$(ssh-agent -s)" \
+    && ssh-add id_ed25519 \
+    && ssh-add id_rsa \
+    && cd /app/ert_wiki
+
 # Copy application code
 COPY ./app .
 COPY gunicorn.conf.py .
