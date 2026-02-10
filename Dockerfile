@@ -3,6 +3,9 @@ FROM python:3.9-slim
 # Set working directory
 WORKDIR /app
 
+# Ensure the mountpoint exists in the image so runtime bind mounts have a directory
+RUN mkdir -p /app/ert_wiki && chown root:root /app/ert_wiki
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     texlive-latex-recommended \
