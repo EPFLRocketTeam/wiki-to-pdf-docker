@@ -445,6 +445,16 @@ def convert_markdown():
                 # Unescape common LaTeX escaping of spaces
                 ref_unescaped = orig.replace('\\ ', ' ')
 
+                # Resolve \assetsDirectory macro references to the template images folder
+                # common LaTeX will write this as "\\assetsDirectory/filename.png"
+                if ref_unescaped.startswith('\\assetsDirectory/'):
+                    ref_unescaped = ref_unescaped.replace('\\assetsDirectory/', template_images_root + os.sep)
+                elif ref_unescaped.startswith('\\assetsDirectory'):
+                    ref_unescaped = ref_unescaped.replace('\\assetsDirectory', template_images_root)
+                elif ref_unescaped.startswith('assetsDirectory/'):
+                    # sometimes the backslash is stripped
+                    ref_unescaped = os.path.join(template_images_root, ref_unescaped.split('/', 1)[1])
+
                 # If it's a URL, download and save preserving path
                 if ref_unescaped.startswith('http://') or ref_unescaped.startswith('https://'):
                     try:
