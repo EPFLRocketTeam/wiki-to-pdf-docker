@@ -161,16 +161,46 @@ def remove_emojis(text: str) -> str:
     We only apply this when writing files intended for Overleaf; the server
     can still retain emojis in other outputs.
     """
-    # Unicode ranges that commonly contain emoji and pictographs
-    emoji_pattern = re.compile("["
-        "\U0001F600-\U0001F64F"  # emoticons
-        "\U0001F300-\U0001F5FF"  # symbols & pictographs
-        "\U0001F680-\U0001F6FF"  # transport & map symbols
-        "\U0001F1E0-\U0001F1FF"  # flags
-        "\U00002702-\U000027B0"
-        "\U000024C2-\U0001F251"
-    "]+", flags=re.UNICODE)
-    return emoji_pattern.sub(r'', text)
+    # Remove colon-style emoji shortcodes like :tada: which sometimes appear
+    text = re.sub(r':[a-z0-9_+\-]+:', '', text, flags=re.IGNORECASE)
+
+    # Comprehensive set of Unicode ranges that include emoji/pictographs
+    emoji_ranges = [
+        '\U0001F000-\U0001FFFF',  # broad supplementary planes (covers many pictographs)
+        '\U0001F300-\U0001F5FF',  # symbols & pictographs
+        '\U0001F600-\U0001F64F',  # emoticons
+        '\U0001F680-\U0001F6FF',  # transport & map symbols
+        '\U0001F700-\U0001F77F',  # alchemical, etc
+        '\U0001F780-\U0001F7FF',
+        '\U0001F800-\U0001F8FF',
+        '\U0001F900-\U0001F9FF',  # supplemental symbols & pictographs
+        '\U0001FA00-\U0001FA6F',
+        '\U0001FA70-\U0001FAFF',  # Symbols & Pictographs Extended-A
+        '\u2600-\u26FF',          # misc symbols
+        '\u2700-\u27BF',          # dingbats
+        '\u2300-\u23FF',
+        '\u2B00-\u2BFF',
+        '\u2900-\u297F'
+    ]
+
+    try:
+        emoji_pattern = re.compile('[' + ''.join(emoji_ranges) + ']+', flags=re.UNICODE)
+        text = emoji_pattern.sub('', text)
+    except re.error:
+        # Fallback: remove commonly-used emoji ranges if the broad pattern fails
+        fallback = re.compile('[\U0001F300-\U0001F6FF\u2600-\u27BF]+', flags=re.UNICODE)
+        text = fallback.sub('', text)
+
+    # Remove variation selector and zero-width-joiner leftovers
+    text = text.replace('\uFE0F', '')
+    text = text.replace('\u200D', '')
+
+    # Remove any extra whitespace created by emoji removals
+    text = re.sub(r'\s+', ' ', text)
+
+    # Also remove any stray leading spaces at the start of lines introduced by removals
+    text = re.sub(r'^[ \t]+', '', text, flags=re.MULTILINE)
+    return text
 
 def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) -> list:
     """Fetch content from Wiki for multiple pages using GraphQL."""
