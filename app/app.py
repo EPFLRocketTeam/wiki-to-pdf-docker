@@ -14,6 +14,7 @@ import zipfile
 from flask_cors import CORS
 from markdown_converter import MarkdownConverter, ConversionError
 from page_data_manager import PageDataManager, PageMetadata
+import emoji
 
 
 app = Flask(__name__)
@@ -164,42 +165,44 @@ def remove_emojis(text: str) -> str:
     # Remove colon-style emoji shortcodes like :tada: which sometimes appear
     text = re.sub(r':[a-z0-9_+\-]+:', '', text, flags=re.IGNORECASE)
 
-    # Comprehensive set of Unicode ranges that include emoji/pictographs
-    emoji_ranges = [
-        '\U0001F000-\U0001FFFF',  # broad supplementary planes (covers many pictographs)
-        '\U0001F300-\U0001F5FF',  # symbols & pictographs
-        '\U0001F600-\U0001F64F',  # emoticons
-        '\U0001F680-\U0001F6FF',  # transport & map symbols
-        '\U0001F700-\U0001F77F',  # alchemical, etc
-        '\U0001F780-\U0001F7FF',
-        '\U0001F800-\U0001F8FF',
-        '\U0001F900-\U0001F9FF',  # supplemental symbols & pictographs
-        '\U0001FA00-\U0001FA6F',
-        '\U0001FA70-\U0001FAFF',  # Symbols & Pictographs Extended-A
-        '\u2600-\u26FF',          # misc symbols
-        '\u2700-\u27BF',          # dingbats
-        '\u2300-\u23FF',
-        '\u2B00-\u2BFF',
-        '\u2900-\u297F'
-    ]
-
+    # Prefer using the `emoji` library which accurately matches emojis and
+    # preserves existing newlines and spacing. If it's unavailable, fall back
+    # to a conservative regex-based removal that also preserves newlines.
     try:
-        emoji_pattern = re.compile('[' + ''.join(emoji_ranges) + ']+', flags=re.UNICODE)
-        text = emoji_pattern.sub('', text)
-    except re.error:
-        # Fallback: remove commonly-used emoji ranges if the broad pattern fails
-        fallback = re.compile('[\U0001F300-\U0001F6FF\u2600-\u27BF]+', flags=re.UNICODE)
-        text = fallback.sub('', text)
+        # emoji.replace_emoji removes all emoji sequences and keeps surrounding whitespace/newlines
+        text = emoji.replace_emoji(text, replace='')
+    except Exception:
+        # Fallback: remove a set of common emoji ranges but preserve newlines
+        emoji_ranges = [
+            '\U0001F300-\U0001F5FF',  # symbols & pictographs
+            '\U0001F600-\U0001F64F',  # emoticons
+            '\U0001F680-\U0001F6FF',  # transport & map symbols
+            '\U0001F700-\U0001F77F',
+            '\U0001F780-\U0001F7FF',
+            '\U0001F800-\U0001F8FF',
+            '\U0001F900-\U0001F9FF',  # supplemental symbols & pictographs
+            '\U0001FA00-\U0001FA6F',
+            '\U0001FA70-\U0001FAFF',  # Symbols & Pictographs Extended-A
+            '\u2600-\u26FF',          # misc symbols
+            '\u2700-\u27BF',          # dingbats
+        ]
+        try:
+            emoji_pattern = re.compile('[' + ''.join(emoji_ranges) + ']+', flags=re.UNICODE)
+            text = emoji_pattern.sub('', text)
+        except re.error:
+            # If regex compilation fails for any reason, leave text unchanged
+            pass
 
-    # Remove variation selector and zero-width-joiner leftovers
-    text = text.replace('\uFE0F', '')
-    text = text.replace('\u200D', '')
+    # Remove variation selector and zero-width-joiner leftovers (actual unicode chars)
+    text = text.replace('\ufe0f', '')
+    text = text.replace('\u200d', '')
 
-    # Remove any extra whitespace created by emoji removals
-    text = re.sub(r'\s+', ' ', text)
+    # Normalize spaces but preserve line breaks: collapse consecutive spaces/tabs to single space
+    text = re.sub(r'[ \t]+', ' ', text)
 
-    # Also remove any stray leading spaces at the start of lines introduced by removals
-    text = re.sub(r'^[ \t]+', '', text, flags=re.MULTILINE)
+    # Trim trailing spaces on each line, but preserve newlines
+    text = re.sub(r'[ \t]+$', '', text, flags=re.MULTILINE)
+
     return text
 
 def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) -> list:
