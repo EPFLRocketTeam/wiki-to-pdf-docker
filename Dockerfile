@@ -30,7 +30,6 @@ RUN apt-get update && apt-get install -y \
     libsecret-1-0 \
     libappindicator3-1 \
     fonts-liberation \
-    libgconf-2-4 \
     ca-certificates \
     libgbm1 \
     libpangocairo-1.0-0 \
