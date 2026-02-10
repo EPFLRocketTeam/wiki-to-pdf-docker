@@ -45,12 +45,26 @@ class MarkdownConverter:
                 "--variable", "code-block-environment=minted"
             ]
             
-            # Add template if specified
-            if template != "default":
-                template_path = f"{os.path.dirname(os.path.realpath(__file__))}/latex_templates/{template}.tex"
-                print(template_path, os.path.exists(template_path))
-                if os.path.exists(template_path):
-                    extra_args.extend(["--template", template_path])
+            # Use a single base template and supply per-template variables
+            base_template_path = f"{os.path.dirname(os.path.realpath(__file__))}/latex_templates/base.tex"
+            # Mapping of template -> variables (backgroundImage, rheadImage, footerText)
+            template_vars = {
+                "default": {},
+                "generic": {"backgroundImage": "ert_title-page.png"},
+                "competition": {"backgroundImage": "c_title-page.png", "rheadImage": "c_patch.png"},
+                "hyperion": {"backgroundImage": "h_title-page.png", "rheadImage": "h_patch.png"},
+                "icarus": {"backgroundImage": "i_title-page.png", "rheadImage": "i_patch.png"},
+                "management": {"backgroundImage": "m_title-page.png"},
+                "space-race": {"backgroundImage": "s_title-page.png", "rheadImage": "s_patch.png"},
+            }
+
+            # Use base template if it exists
+            if os.path.exists(base_template_path):
+                extra_args.extend(["--template", base_template_path])
+                # Add variables for the requested template
+                vars_for_template = template_vars.get(template, {})
+                for k, v in vars_for_template.items():
+                    extra_args.extend(["--variable", f"{k}={v}"])
             
             # Add metadata file if it exists
             if metadata_file:

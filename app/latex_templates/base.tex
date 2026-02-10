@@ -78,24 +78,6 @@ $endif$
 \newcommand{\colorc}{yellow!80!black}
 \newcommand{\colord}{green!80!black}
 \newcommand{\colore}{blue!80!black}
-%\setlength{\linenumbersep}{1cm} % Adjust spacing here (e.g., 10pt, 15pt for more spacing)
-%\newcounter{linecolor}
-%\renewcommand\makeLineNumber{%
-  %\stepcounter{linecolor}%
-  %\ifnum\value{linecolor}=1%
-    %\color{\colora}\thelinenumber
-  %\else\ifnum\value{linecolor}=2%
-    %\color{\colorb}\thelinenumber
-  %\else\ifnum\value{linecolor}=3%
-    %\color{\colorc}\thelinenumber
-  %\else\ifnum\value{linecolor}=4%
-    %\color{\colord}\thelinenumber
-  %\else\ifnum\value{linecolor}=5%
-    %\color{\colore}\thelinenumber
-    %\setcounter{linecolor}{0}%
-  %\fi\fi\fi\fi\fi
-  %\kern-1em%
-%}
 
 % PANDOC IMPORTS
 \makeatletter
@@ -115,6 +97,7 @@ $endif$
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
 
 % FONT SETTINGS
 \renewcommand\familydefault{\sfdefault}
@@ -139,16 +122,19 @@ $endif$
 \sodef\an{}{.1em}{0.1em}{0.1em}
 
 % FRONT PAGE BACKGROUND IMAGE
+% Use a variable so different templates can provide different images.
+$if(backgroundImage)$
 \newcommand\BackgroundPic{
     \put(-3.1pt,0){
         \parbox[b][\paperheight]{\paperwidth}{
             \vfill
             \centering
-            \includegraphics[width=\paperwidth,height=\paperheight]{\assetsDirectory/c_title-page.png}
+            \includegraphics[width=\paperwidth,height=\paperheight]{\assetsDirectory/$backgroundImage$}
             \vfill
         }
     }
 }
+$endif$
 
 % Shaded environment
 \newenvironment{Shaded}{%
@@ -223,6 +209,9 @@ $endif$
 \newcounter{rownumbers}
 \newcommand\rownumber{\stepcounter{rownumbers}\arabic{rownumbers}}
 
+% Add a none counter
+\newcounter{none}
+
 % Handle pandoc's title and doc_id variables
 \newcommand{\doctitle}{$title$}
 \newcommand{\docid}{$documentId$}
@@ -257,7 +246,11 @@ $endif$
 \fancyhead[C]{\rule[-2ex]{0pt}{2ex} \bf{  \fontsize{12}{5} \selectfont \docid}}
 \lhead{}
 \lhead{\includegraphics[height=1.5cm]{\assetsDirectory/ert_logo_small.png}\vspace{-4mm}}
-\rhead{\includegraphics[height=1.5cm]{\assetsDirectory/c_patch.png}\vspace{-4mm}}
+$if(rheadImage)$
+\rhead{\includegraphics[height=1.5cm]{\assetsDirectory/$rheadImage$}\vspace{-4mm}}
+$else$
+\rhead{}
+$endif$
 
 % FOOTER OPTIONS
 \cfoot{}
@@ -277,9 +270,7 @@ $endif$
     \hspace*{-1.2cm}
     \parbox{\linewidth}{%
         \bfseries\fontsize{14}{18}\selectfont
-	    \docauthor
-        %NAME Surname - 33000 \\
-        %NAME Surname - 33001
+        \docauthor
     }
     
     % ADDITIONAL TITLE PAGE DETAILS
