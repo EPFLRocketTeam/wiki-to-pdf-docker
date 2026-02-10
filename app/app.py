@@ -154,6 +154,24 @@ def filter_text(text):
     text_correct_formated_tabs = add_blank_line_after_titles(text_without_tags)
     return text_correct_formated_tabs
 
+
+def remove_emojis(text: str) -> str:
+    """
+    Remove emoji characters from text to avoid issues with LaTeX/Overleaf.
+    We only apply this when writing files intended for Overleaf; the server
+    can still retain emojis in other outputs.
+    """
+    # Unicode ranges that commonly contain emoji and pictographs
+    emoji_pattern = re.compile("["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F1E0-\U0001F1FF"  # flags
+        "\U00002702-\U000027B0"
+        "\U000024C2-\U0001F251"
+    "]+", flags=re.UNICODE)
+    return emoji_pattern.sub(r'', text)
+
 def fetch_wiki_contents(paths: list, locales: list, url: str, jwt_token: str) -> list:
     """Fetch content from Wiki for multiple pages using GraphQL."""
     headers = {
@@ -362,8 +380,12 @@ def convert_markdown():
         os.makedirs(project_temp_path)
 
         main_tex_path = os.path.join(project_temp_path, 'main.tex')
+        # Remove emojis before writing files intended for Overleaf to avoid
+        # LaTeX/Overleaf encoding issues. The server-side returned `latex`
+        # content can still include emojis.
+        safe_latex_content = remove_emojis(latex_content)
         with open(main_tex_path, 'w') as f:
-            f.write(latex_content)
+            f.write(safe_latex_content)
 
         # 2. **CRITICAL STEP:** Identify and copy/generate all external assets
         #    This is the most complex part and depends on how your markdown converter
