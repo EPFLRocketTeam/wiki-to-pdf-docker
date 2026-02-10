@@ -15,6 +15,7 @@ from flask_cors import CORS
 from markdown_converter import MarkdownConverter, ConversionError
 from page_data_manager import PageDataManager, PageMetadata
 import emoji
+from urllib.parse import urlparse
 
 
 app = Flask(__name__)
@@ -419,6 +420,125 @@ def convert_markdown():
         safe_latex_content = remove_emojis(latex_content)
         with open(main_tex_path, 'w') as f:
             f.write(safe_latex_content)
+
+        # Collect assets referenced by the LaTeX and copy them into the project
+        def collect_assets(latex_text: str, project_dir: str) -> dict:
+            """Find referenced files in LaTeX (\includegraphics, \input, \include)
+            and copy them into the project_dir preserving path structure.
+            Returns a mapping of original_reference -> dest_relative_path (within project_dir).
+            """
+            img_re = re.compile(r"\\includegraphics(?:\[[^]]*\])?\{([^}]+)\}")
+            input_re = re.compile(r"\\(?:input|include)\{([^}]+)\}")
+            found = set(img_re.findall(latex_text) + input_re.findall(latex_text))
+
+            mapping = {}
+            # roots to try for local resolution
+            ert_root = '/app/ert_wiki'
+            template_images_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'latex_templates', 'template_images')
+
+            for ref in found:
+                orig = ref.strip()
+                # skip empty
+                if not orig:
+                    continue
+
+                # Unescape common LaTeX escaping of spaces
+                ref_unescaped = orig.replace('\\ ', ' ')
+
+                # If it's a URL, download and save preserving path
+                if ref_unescaped.startswith('http://') or ref_unescaped.startswith('https://'):
+                    try:
+                        parsed = urlparse(ref_unescaped)
+                        rel_path = parsed.path.lstrip('/')
+                        dest_abs = os.path.join(project_dir, rel_path)
+                        os.makedirs(os.path.dirname(dest_abs), exist_ok=True)
+                        resp = requests.get(ref_unescaped, stream=True, timeout=15)
+                        if resp.status_code == 200:
+                            with open(dest_abs, 'wb') as out_f:
+                                for chunk in resp.iter_content(8192):
+                                    out_f.write(chunk)
+                            mapping[orig] = rel_path
+                        else:
+                            print(f"Warning: failed to download {ref_unescaped}: {resp.status_code}")
+                    except Exception as e:
+                        print(f"Warning: error downloading {ref_unescaped}: {e}")
+                    continue
+
+                # If absolute path, copy and preserve the absolute structure (strip leading /)
+                if os.path.isabs(ref_unescaped):
+                    src = ref_unescaped
+                    if os.path.exists(src):
+                        rel_path = ref_unescaped.lstrip('/')
+                        dest_abs = os.path.join(project_dir, rel_path)
+                        os.makedirs(os.path.dirname(dest_abs), exist_ok=True)
+                        try:
+                            shutil.copy2(src, dest_abs)
+                            mapping[orig] = rel_path
+                        except Exception as e:
+                            print(f"Warning: failed to copy {src} -> {dest_abs}: {e}")
+                        continue
+
+                # Non-absolute: try resolving relative to ert_wiki, template images, and file relative to this file
+                candidates = [
+                    os.path.join(ert_root, ref_unescaped),
+                    os.path.join(template_images_root, ref_unescaped),
+                    os.path.join(os.path.dirname(os.path.realpath(__file__)), ref_unescaped),
+                    ref_unescaped,
+                ]
+
+                src = None
+                for c in candidates:
+                    if os.path.exists(c):
+                        src = c
+                        break
+
+                # Try adding common extensions if not found
+                if not src:
+                    for ext in ['.png', '.jpg', '.jpeg', '.pdf', '.svg']:
+                        for c in candidates:
+                            c2 = c + ext
+                            if os.path.exists(c2):
+                                src = c2
+                                break
+                        if src:
+                            break
+
+                if not src:
+                    print(f"Warning: could not resolve asset reference: {ref_unescaped}")
+                    continue
+
+                # Determine dest relative path: preserve original ref path when possible
+                # If ref_unescaped is relative, keep as-is; if it was absolute, we already handled above.
+                if os.path.isabs(ref_unescaped):
+                    rel_path = ref_unescaped.lstrip('/')
+                else:
+                    rel_path = ref_unescaped
+
+                dest_abs = os.path.join(project_dir, rel_path)
+                os.makedirs(os.path.dirname(dest_abs), exist_ok=True)
+                try:
+                    shutil.copy2(src, dest_abs)
+                    mapping[orig] = rel_path
+                except Exception as e:
+                    print(f"Warning: failed to copy {src} -> {dest_abs}: {e}")
+
+            # Update main.tex to point to the copied relative paths (replace absolute/URL refs)
+            main_tex = os.path.join(project_dir, 'main.tex')
+            if os.path.exists(main_tex):
+                try:
+                    with open(main_tex, 'r', encoding='utf8') as fh:
+                        content = fh.read()
+                    for orig, newrel in mapping.items():
+                        # replace occurrences of the original reference with the project-relative path
+                        content = content.replace(orig, newrel)
+                    with open(main_tex, 'w', encoding='utf8') as fh:
+                        fh.write(content)
+                except Exception as e:
+                    print(f"Warning: failed to update main.tex paths: {e}")
+
+            return mapping
+
+        collect_assets(safe_latex_content, project_temp_path)
 
         # 2. **CRITICAL STEP:** Identify and copy/generate all external assets
         #    This is the most complex part and depends on how your markdown converter
