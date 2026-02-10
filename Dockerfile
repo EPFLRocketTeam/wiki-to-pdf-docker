@@ -47,7 +47,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Add cron job to pull the repo every minute
-RUN echo "* * * * * cd /app/ert_wiki && git pull "git@github.com:EPFLRocketTeam/ert_wiki.git" > /var/log/cron.log 2>&1" > /etc/cron.d/ert_wiki_cron \
+RUN echo "* * * * * cd /app/ert_wiki && git pull 'git@github.com:EPFLRocketTeam/ert_wiki.git' > /var/log/cron.log 2>&1" > /etc/cron.d/ert_wiki_cron \
     && chmod 0644 /etc/cron.d/ert_wiki_cron \
     && crontab /etc/cron.d/ert_wiki_cron
     
@@ -67,8 +67,7 @@ RUN cd /root/.ssh \
     && ssh-keyscan github.com >> /root/.ssh/known_hosts \
     && chmod 644 /root/.ssh/known_hosts \
     && cd /app/ert_wiki \
-    && git config --global --add safe.directory /app/ert_wiki \
-    && git pull
+    && git config --global --add safe.directory /app/ert_wiki
 # Ensure cron runs in the container
 CMD ["sh", "-c", "cron && gunicorn --config gunicorn.conf.py app:app"]
 
