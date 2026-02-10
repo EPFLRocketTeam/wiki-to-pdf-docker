@@ -52,7 +52,6 @@ RUN echo "* * * * * cd /app/ert_wiki && git pull "git@github.com:EPFLRocketTeam/
 # Copy application code
 COPY ./app .
 COPY gunicorn.conf.py .
-COPY ./ert_wiki ./ert_wiki
 COPY ImageLuaFilter.lua .
 COPY .ssh /root/.ssh:ro
 COPY --chmod=0600 .ssh/id_ed25519 /root/.ssh/id_ed25519
