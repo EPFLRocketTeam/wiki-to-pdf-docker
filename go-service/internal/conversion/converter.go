@@ -84,7 +84,7 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 		"--from", "markdown",
 		"--to", "latex",
 		"--lua-filter", c.cfg.LuaFilterPath,
-		"--variable", "code-block-environment=minted",
+		"--variable", "code-block-environment=verbatim",
 		"--template", c.cfg.BaseTemplatePath,
 		"--metadata-file", metaPath,
 		mdPath,

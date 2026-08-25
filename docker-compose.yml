@@ -19,6 +19,8 @@ services:
     restart: unless-stopped
     volumes:
       - ./ert_wiki:/app/ert_wiki
+      - ./app/latex_templates:/app/latex_templates:ro
+      - ./ImageLuaFilter.lua:/app/ImageLuaFilter.lua:ro
 
   redis:
     image: "redis:7-alpine"
