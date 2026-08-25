@@ -1,0 +1,14 @@
+{
+  "name": "generate-pdf-basic",
+  "method": "POST",
+  "path": "/generate-pdf",
+  "request": {
+    "title": "Contract PDF",
+    "latex_code": "\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\begin{document}\nHello from contract test.\\\n\\section*{Status}\nParity check in progress.\n\\end{document}\n"
+  },
+  "compare": {
+    "type": "pdf",
+    "pdfByteDeltaMax": 4096,
+    "pdfByteDeltaRatio": 0.08
+  }
+}

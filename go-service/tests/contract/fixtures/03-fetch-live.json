@@ -1,0 +1,29 @@
+{
+  "name": "fetch-live-wikijs",
+  "skipIfMissingEnv": [
+    "WIKI_SAMPLE_PAGE_URL",
+    "WIKI_GRAPHQL_URL",
+    "WIKI_TOKEN"
+  ],
+  "steps": [
+    {
+      "name": "fetch",
+      "method": "POST",
+      "path": "/fetch",
+      "request": {
+        "urls": [
+          "{{env:WIKI_SAMPLE_PAGE_URL}}"
+        ],
+        "graphql_url": "{{env:WIKI_GRAPHQL_URL}}",
+        "token": "{{env:WIKI_TOKEN}}"
+      },
+      "compare": {
+        "type": "json",
+        "ignoreFields": [
+          "createdAt",
+          "updatedAt"
+        ]
+      }
+    }
+  ]
+}

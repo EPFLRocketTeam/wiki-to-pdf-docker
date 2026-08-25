@@ -4,7 +4,7 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
@@ -17,6 +17,52 @@ services:
     volumes:
       - .ssh:/root/.ssh:ro
       - ./ert_wiki:/app/ert_wiki
+
+  web-go:
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+    ports:
+      - "8002:8000"
+    environment:
+      - LISTEN_ADDR=:8000
+      - REDIS_ADDR=redis-wiki-to-pdf:6379
+      - REDIS_DB=0
+      - CORS_ALLOWED_ORIGINS=https://rocket-team.epfl.ch
+      - TOOL_TIMEOUT=120s
+      - LUA_FILTER_PATH=/app/ImageLuaFilter.lua
+      - BASE_TEMPLATE_PATH=/app/latex_templates/base.tex
+      - ASSETS_TEMPLATE_DIR=/app/latex_templates/template_images
+      - ERT_WIKI_ROOT=/app/ert_wiki
+      - LOG_LEVEL=info
+    restart: unless-stopped
+    networks:
+      - default
+      - nginx-proxy
+    volumes:
+      - ./ert_wiki:/app/ert_wiki
+
+  compare-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.compare
+    depends_on:
+      - web
+      - web-go
+    ports:
+      - "8000:8080"
+    environment:
+      - COMPARE_LISTEN_ADDR=:8080
+      - PYTHON_BACKEND_URL=http://web:8000
+      - GO_BACKEND_URL=http://web-go:8000
+      - COMPARE_SINK_FILE=/tmp/compare-results.jsonl
+      - COMPARE_MAX_RECORDS=5000
+      - COMPARE_LATENCY_GAP_MS=500
+      - COMPARE_CAPTURE_BODY_LIMIT=65536
+    restart: unless-stopped
+    networks:
+      - default
+      - nginx-proxy
 
   redis:
     image: "redis:7-alpine"

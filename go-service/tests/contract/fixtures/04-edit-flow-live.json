@@ -1,0 +1,75 @@
+{
+  "name": "edit-flow-live",
+  "steps": [
+    {
+      "name": "store-page-data",
+      "method": "POST",
+      "path": "/store",
+      "request": {
+        "page": {
+          "path": "contracts/edit-flow",
+          "title": "Edit Flow Contract",
+          "authorName": "Contract Runner",
+          "content": "# Full Edit Flow\n\nThis payload verifies store->convert->zip->pdf behavior."
+        }
+      },
+      "compare": {
+        "type": "json",
+        "ignoreFields": [
+          "session_id"
+        ]
+      },
+      "saveFields": {
+        "stored_session_id": "session_id"
+      }
+    },
+    {
+      "name": "convert-to-latex",
+      "method": "POST",
+      "path": "/convert",
+      "request": {
+        "markdown": "# Full Edit Flow\n\nThis payload verifies store->convert->zip->pdf behavior.",
+        "template": "space-race",
+        "author": "Contract Runner",
+        "date": "2026-08-25",
+        "title": "Edit Flow Contract",
+        "documentId": "2026_P_SS_DOC",
+        "footerText": "contract",
+        "lineNumbersEnabled": false
+      },
+      "compare": {
+        "type": "json",
+        "ignoreFields": [
+          "session_id"
+        ]
+      },
+      "saveFields": {
+        "zip_session_id": "session_id"
+      }
+    },
+    {
+      "name": "serve-overleaf-zip",
+      "method": "GET",
+      "path": "/serve-zip-project/{{var:zip_session_id}}",
+      "compare": {
+        "type": "zip",
+        "pdfByteDeltaMax": 8192,
+        "pdfByteDeltaRatio": 0.1
+      }
+    },
+    {
+      "name": "compile-pdf",
+      "method": "POST",
+      "path": "/generate-pdf",
+      "request": {
+        "title": "Edit Flow Contract",
+        "latex_code": "\\documentclass{article}\n\\begin{document}\nEdit flow compile parity.\n\\end{document}\n"
+      },
+      "compare": {
+        "type": "pdf",
+        "pdfByteDeltaMax": 4096,
+        "pdfByteDeltaRatio": 0.08
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit Session - Go SPA</title>
+  <style>
+    :root {
+      --bg: #f3efe4;
+      --ink: #17222a;
+      --brand: #c6382f;
+      --brand2: #0c4f66;
+      --edge: #d8d0bf;
+      --card: #fffdfa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", sans-serif;
+      background:
+        radial-gradient(circle at 80% -20%, #fff1b8 0%, rgba(255, 241, 184, 0) 40%),
+        var(--bg);
+      color: var(--ink);
+    }
+    .wrap { max-width: 1220px; margin: 0 auto; padding: 18px; }
+    .stack > * + * { margin-top: 12px; }
+    .card { background: var(--card); border: 1px solid var(--edge); border-radius: 12px; padding: 14px; }
+    .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    @media (max-width: 960px) { .row { grid-template-columns: 1fr; } }
+    label { display: block; font-size: .86rem; color: #42525d; margin-bottom: 4px; }
+    input { width: 100%; margin: 0; padding: 9px 10px; border: 1px solid #cfc7bb; border-radius: 8px; }
+    .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { border: 1px solid #9f2f2f; background: var(--brand); color: white; border-radius: 8px; padding: 9px 12px; cursor: pointer; font-weight: 700; }
+    button.secondary { background: white; color: var(--brand2); border-color: #94aab5; }
+    .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 960px) { .editor-grid { grid-template-columns: 1fr; } }
+    .editor-shell { border: 1px solid #d3cab9; border-radius: 10px; overflow: hidden; }
+    .editor-top { padding: 8px 10px; font-size: .85rem; color: #3f5560; border-bottom: 1px solid #e5dccf; background: #fbf8f2; }
+    .editor { height: 380px; }
+    pre { white-space: pre-wrap; background: #10161c; color: #d5f0d5; border-radius: 10px; padding: 10px; min-height: 90px; margin: 0; }
+    iframe { width: 100%; height: 530px; border: 0; border-radius: 10px; background: #fff; }
+    h1, h2 { margin: 0 0 10px; color: var(--brand2); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="stack">
+      <div class="card">
+        <h1>Edit Session</h1>
+        <div id="meta"></div>
+      </div>
+
+      <div class="card stack">
+        <h2>Metadata</h2>
+        <div class="row">
+          <div>
+            <label for="author">Author</label>
+            <input id="author" placeholder="Author" />
+          </div>
+          <div>
+            <label for="title">Title</label>
+            <input id="title" placeholder="Title" />
+          </div>
+          <div>
+            <label for="date">Date</label>
+            <input id="date" placeholder="YYYY-MM-DD" />
+          </div>
+          <div>
+            <label for="documentId">Document ID</label>
+            <input id="documentId" placeholder="Document ID" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Editors</h2>
+        <div class="editor-grid">
+          <div class="editor-shell">
+            <div class="editor-top">Markdown source</div>
+            <div id="markdownEditor" class="editor"></div>
+          </div>
+          <div class="editor-shell">
+            <div class="editor-top">LaTeX output</div>
+            <div id="latexEditor" class="editor"></div>
+          </div>
+        </div>
+        <div class="btnrow">
+          <button id="convertBtn">Convert to LaTeX</button>
+          <button id="compileBtn">Compile PDF</button>
+          <button id="overleafBtn" class="secondary">Edit in Overleaf</button>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Output</h2>
+        <pre id="output"></pre>
+      </div>
+
+      <div class="card">
+        <h2>PDF Preview</h2>
+        <iframe id="preview"></iframe>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs/loader.min.js"></script>
+  <script src="/ui/app.js"></script>
+</body>
+</html>

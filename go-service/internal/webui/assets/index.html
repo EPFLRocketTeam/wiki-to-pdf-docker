@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wiki to PDF - Go SPA</title>
+  <style>
+    :root {
+      --bg: #f3efe4;
+      --ink: #17222a;
+      --brand: #c6382f;
+      --brand2: #0c4f66;
+      --edge: #d8d0bf;
+      --card: #fffdfa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 90% -10%, #fff1b8 0%, rgba(255, 241, 184, 0) 40%),
+        radial-gradient(circle at -10% 120%, #d9eef6 0%, rgba(217, 238, 246, 0) 35%),
+        var(--bg);
+    }
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #fffdfa, #f7f3ea);
+      border: 1px solid var(--edge);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
+      animation: rise .5s ease;
+    }
+    @keyframes rise {
+      from { transform: translateY(8px); opacity: .4; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: var(--brand2);
+      letter-spacing: .02em;
+    }
+    .sub {
+      color: #4c5b64;
+      margin: 8px 0 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    @media (max-width: 1060px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--edge);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+    }
+    .stack > * + * { margin-top: 10px; }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: var(--brand2);
+    }
+    label {
+      display: block;
+      font-size: .86rem;
+      color: #40525d;
+      margin-bottom: 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      margin: 0;
+      padding: 9px 10px;
+      border-radius: 9px;
+      border: 1px solid #cfc6b6;
+      background: #fffefc;
+      font: inherit;
+    }
+    .btnrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    button {
+      border: 1px solid #9f2f2f;
+      background: var(--brand);
+      color: white;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button.secondary {
+      background: white;
+      color: var(--brand2);
+      border-color: #94aab5;
+    }
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 1060px) {
+      .editor-grid { grid-template-columns: 1fr; }
+    }
+    .editor-shell {
+      border: 1px solid #d3cab9;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .editor-top {
+      padding: 8px 10px;
+      font-size: .85rem;
+      color: #3f5560;
+      border-bottom: 1px solid #e5dccf;
+      background: #fbf8f2;
+    }
+    .editor {
+      height: 380px;
+    }
+    .preview {
+      margin-top: 12px;
+      border: 1px solid #d3cab9;
+      border-radius: 10px;
+      overflow: hidden;
+      background: white;
+    }
+    iframe {
+      width: 100%;
+      height: 530px;
+      border: 0;
+    }
+    pre {
+      white-space: pre-wrap;
+      background: #10161c;
+      color: #d5f0d5;
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 90px;
+      overflow: auto;
+      margin: 0;
+    }
+    .small { color: #53626b; font-size: .9rem; }
+    .pill {
+      display: inline-block;
+      background: #e8f2f5;
+      border: 1px solid #c8dde3;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .78rem;
+      color: #305161;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Wiki to PDF - Go SPA</h1>
+      <p class="sub">Advanced migration shell with Monaco editors, Wiki fetch, conversion, compile preview, and Overleaf deep-link parity.</p>
+      <div class="pill">Primary traffic can stay on Python while this SPA targets Go endpoints directly</div>
+    </div>
+
+    <div class="grid">
+      <div class="stack">
+        <div class="card stack">
+          <h2>Wiki Access</h2>
+          <div>
+            <label for="graphqlUrl">GraphQL endpoint</label>
+            <input id="graphqlUrl" placeholder="https://wiki.example.ch/graphql" />
+          </div>
+          <div>
+            <label for="username">Username</label>
+            <input id="username" placeholder="wiki username" />
+          </div>
+          <div>
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="wiki password" />
+          </div>
+          <div class="btnrow">
+            <button id="tokenBtn">Get Access Token</button>
+            <a class="small" href="/how-to-get-access-token">How to get access token</a>
+          </div>
+          <div>
+            <label for="token">JWT token</label>
+            <input id="token" placeholder="eyJhbGciOi..." />
+          </div>
+        </div>
+
+        <div class="card stack">
+          <h2>Fetch Wiki Pages</h2>
+          <div>
+            <label for="pageUrls">Page URLs (one per line)</label>
+            <textarea id="pageUrls" rows="5" placeholder="https://wiki.../en/management"></textarea>
+          </div>
+          <div class="btnrow">
+            <button id="fetchBtn">Fetch</button>
+          </div>
+          <div>
+            <label for="pageSelector">Loaded page</label>
+            <select id="pageSelector"></select>
+          </div>
+          <div>
+            <label for="template">Template</label>
+            <select id="template">
+              <option value="space-race">space-race</option>
+              <option value="competition">competition</option>
+              <option value="icarus">icarus</option>
+              <option value="hyperion">hyperion</option>
+              <option value="management">management</option>
+              <option value="generic">generic</option>
+            </select>
+          </div>
+          <div>
+            <label for="author">Author</label>
+            <input id="author" />
+          </div>
+          <div>
+            <label for="title">Title</label>
+            <input id="title" />
+          </div>
+          <div>
+            <label for="date">Date</label>
+            <input id="date" placeholder="YYYY-MM-DD" />
+          </div>
+          <div>
+            <label for="documentId">Document ID</label>
+            <input id="documentId" placeholder="202X_P_SS_DOC" />
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card stack">
+          <h2>Document Editors</h2>
+          <div class="editor-grid">
+            <div class="editor-shell">
+              <div class="editor-top">Markdown source</div>
+              <div id="markdownEditor" class="editor"></div>
+            </div>
+            <div class="editor-shell">
+              <div class="editor-top">LaTeX output</div>
+              <div id="latexEditor" class="editor"></div>
+            </div>
+          </div>
+          <div class="btnrow">
+            <button id="convertBtn">Convert to LaTeX</button>
+            <button id="compileBtn">Compile PDF</button>
+            <button id="overleafBtn" class="secondary">Edit in Overleaf</button>
+          </div>
+          <div class="small" id="convertMeta"></div>
+          <div class="small" id="pdfMeta"></div>
+        </div>
+
+        <div class="card">
+          <h2>Compiler Output</h2>
+          <pre id="output"></pre>
+        </div>
+
+        <div class="card preview">
+          <h2 style="padding:12px 12px 0">PDF Preview</h2>
+          <iframe id="preview"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs/loader.min.js"></script>
+  <script src="/ui/app.js"></script>
+</body>
+</html>
