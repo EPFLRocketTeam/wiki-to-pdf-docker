@@ -7,26 +7,9 @@ RUN go mod download
 COPY go-service ./
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/wiki-to-pdf-go ./cmd/server
 
-FROM debian:bookworm-slim
+FROM pandoc/latex:3.6
 
 WORKDIR /app
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    wget \
-    git \
-    texlive-latex-recommended \
-    texlive-fonts-recommended \
-    texlive-fonts-extra \
-    texlive-science \
-    texlive-latex-extra \
-    texlive-bibtex-extra \
-    texlive-full \
-    plantuml \
-    inkscape \
-    pandoc \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /out/wiki-to-pdf-go /app/wiki-to-pdf-go
 COPY ImageLuaFilter.lua /app/ImageLuaFilter.lua

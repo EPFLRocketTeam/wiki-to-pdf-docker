@@ -1,20 +1,19 @@
 # Contract Tests
 
-This suite replays recorded request payloads against both backends and compares outputs.
+This suite replays recorded request payloads against the Go backend and validates responses.
 
 ## Purpose
 
-- Verify API parity while Python remains primary.
+- Verify the Go API against recorded request payloads.
 - Detect response drift in JSON endpoints.
 - Detect PDF generation drift with artifact heuristics.
 - Validate multi-step edit flow scenarios with response-derived variables.
 
 ## Run
 
-1. Start both services:
+1. Start the Go service:
 
-   - Python on `http://localhost:8001`
-   - Go on `http://localhost:8002`
+   - Go on `http://localhost:8000`
 
 2. Execute tests:
 
@@ -31,8 +30,7 @@ This suite replays recorded request payloads against both backends and compares 
 
 ## Environment overrides
 
-- `PYTHON_BASE_URL` default: `http://localhost:8001`
-- `GO_BASE_URL` default: `http://localhost:8002`
+- `GO_BASE_URL` default: `http://localhost:8000`
 - `WIKI_SAMPLE_PAGE_URL` optional, required for live `/fetch` fixture
 - `WIKI_GRAPHQL_URL` optional, required for live `/fetch` fixture
 - `WIKI_TOKEN` optional, required for live `/fetch` fixture
@@ -58,9 +56,4 @@ Each fixture in `fixtures/*.json` contains:
 
 ## Capturing production-like payloads
 
-Use compare proxy endpoints after running mirrored traffic:
-
-- `GET /_compare/results`
-- `GET /_compare/discrepancies`
-
-Save those request bodies as new fixture drafts, then tune comparison fields.
+Save production-like request bodies as new fixture drafts, then tune comparison fields against the Go service.

@@ -39,10 +39,8 @@ This folder contains an incremental Go migration scaffold for the wiki-to-pdf ba
 ## Run locally
 
 1. Ensure dependencies are installed and available on PATH:
-   - `pandoc`
-   - `lualatex`
-   - `inkscape`
-   - `plantuml`
+  - `pandoc`
+  - `lualatex`
 2. Ensure Redis is running.
 3. Start the service:
 
@@ -69,19 +67,9 @@ go run ./cmd/server
 
 ## Suggested rollout
 
-1. Deploy this service in parallel with Flask.
-2. Mirror a subset of traffic to Go and compare outputs.
-3. Switch conversion and PDF generation endpoints first.
-4. Migrate template rendering in a second step.
-
-## Compare sink
-
-When using the side-by-side compare proxy service, inspect automatic shadow comparison results:
-
-- `GET /_compare/results?limit=100`
-- `GET /_compare/discrepancies?limit=100`
-
-Each record includes request id, method/path, Python status/latency, Go status/latency, and discrepancy reason.
+1. Deploy the Go backend.
+2. Validate conversion and PDF generation with recorded requests.
+3. Remove the legacy Python service once parity is confirmed.
 
 ## Contract replay tests
 
@@ -91,9 +79,6 @@ From this folder:
 RUN_CONTRACT_TESTS=1 go test ./tests/contract -v
 ```
 
-Defaults compare these base URLs:
+Defaults target the Go backend at `http://localhost:8000`.
 
-- Python: `http://localhost:8001`
-- Go: `http://localhost:8002`
-
-Override with `PYTHON_BASE_URL` and `GO_BASE_URL`.
+Override with `GO_BASE_URL` if needed.

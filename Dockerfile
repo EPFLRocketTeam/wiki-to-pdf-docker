@@ -10,11 +10,12 @@ RUN mkdir -p /app/ert_wiki && chown root:root /app/ert_wiki
 RUN apt-get update && apt-get install -y \
     texlive-latex-recommended \
     texlive-fonts-recommended \
-    texlive-fonts-extra \
     texlive-science \
     texlive-latex-extra \
     texlive-bibtex-extra \
-    texlive-full \
+    texlive-luatex \
+    texlive-pictures \
+    texlive-plain-generic \
     python3 \
     binutils \
     plantuml \
@@ -45,31 +46,16 @@ RUN apt-get update && apt-get install -y \
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Add cron job to pull the repo every minute
-RUN echo "* * * * * cd /app/ert_wiki && git pull 'git@github.com:EPFLRocketTeam/ert_wiki.git' > /var/log/cron.log 2>&1" > /etc/cron.d/ert_wiki_cron \
-    && chmod 0644 /etc/cron.d/ert_wiki_cron \
-    && crontab /etc/cron.d/ert_wiki_cron
     
 # Copy application code
 COPY ./app .
 COPY gunicorn.conf.py .
 COPY ImageLuaFilter.lua .
-COPY .ssh /root/.ssh:ro
-COPY --chmod=0600 .ssh/id_ed25519 /root/.ssh/id_ed25519
-COPY --chmod=0600 .ssh/id_rsa /root/.ssh/id_rsa
-    
-# Initialise ssh keys to pull updates from repo
-RUN cd /root/.ssh \
-    && eval "$(ssh-agent -s)" \
-    && ssh-add id_ed25519 \
-    && ssh-add id_rsa \
-    && ssh-keyscan github.com >> /root/.ssh/known_hosts \
-    && chmod 644 /root/.ssh/known_hosts \
-    && cd /app/ert_wiki \
-    && git config --global --add safe.directory /app/ert_wiki
-# Ensure cron runs in the container
-CMD ["sh", "-c", "cron && gunicorn --config gunicorn.conf.py app:app"]
+
+# Ensure the bind-mounted wiki directory can be accessed safely by git if needed.
+RUN git config --global --add safe.directory /app/ert_wiki
+
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]
 
 # Expose port 8000 (Gunicorn default)
 EXPOSE 8000
