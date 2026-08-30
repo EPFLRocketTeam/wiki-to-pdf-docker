@@ -64,11 +64,19 @@ function CodeBlock(block)
     file:write(block.text)
     file:close()
 
-    -- Generate a PDF instead of PNG
-    os.execute("plantuml -tpdf " .. uml_file)
+    -- Generate a PDF instead of PNG. Avoid emitting a broken temporary path
+    -- when PlantUML cannot generate an image.
+    local ok = os.execute("plantuml -tpdf " .. uml_file .. " > /dev/null 2>&1")
+    local pdf_file = uml_file:gsub('%.puml', '.pdf')
+    local generated = io.open(pdf_file, "rb")
+    if not ok or not generated then
+      if generated then generated:close() end
+      error("PlantUML failed to generate a PDF diagram")
+    end
+    generated:close()
 
     -- Return LaTeX code to include the PDF
-    return pandoc.RawBlock("latex", "\\includegraphics[width=\\linewidth,keepaspectratio]{" .. uml_file:gsub('%.puml', '.pdf') .. "}")
+    return pandoc.RawBlock("latex", "\\includegraphics[width=\\linewidth,keepaspectratio]{" .. pdf_file .. "}")
   elseif block.classes:includes("diagram") then
     -- Decode the SVG content from the block
     local svg_content = decode_base64_to_svg(block.text)

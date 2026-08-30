@@ -120,7 +120,13 @@ func (h *Handlers) Convert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.store.PutZipPath(ctx, result.SessionID, result.ZipPath, 10*time.Minute); err != nil {
+	zipData, err := os.ReadFile(result.ZipPath)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: fmt.Sprintf("failed reading conversion assets: %v", err)})
+		return
+	}
+	defer os.Remove(result.ZipPath)
+	if err := h.store.PutZipData(ctx, result.SessionID, zipData, 10*time.Minute); err != nil {
 		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: fmt.Sprintf("failed storing zip session: %v", err)})
 		return
 	}
@@ -146,17 +152,17 @@ func (h *Handlers) GeneratePDF(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), h.cfg.ToolTimeout)
 	defer cancel()
 
-	zipPath := ""
+	var zipData []byte
 	if req.AssetSessionID != "" {
 		var err error
-		zipPath, err = h.store.GetZipPath(ctx, req.AssetSessionID)
+		zipData, err = h.store.GetZipData(ctx, req.AssetSessionID)
 		if err != nil {
 			writeJSON(w, http.StatusNotFound, model.ErrorResponse{Error: "conversion assets not found or expired"})
 			return
 		}
 	}
 
-	pdfBytes, err := h.converter.GeneratePDF(ctx, req.LatexCode, zipPath)
+	pdfBytes, err := h.converter.GeneratePDF(ctx, req.LatexCode, zipData)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: "failed to compile PDF", Message: err.Error()})
 		return
@@ -255,13 +261,7 @@ func (h *Handlers) ServeZipProject(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
-	zipPath, err := h.store.GetZipPath(ctx, sessionID)
-	if err != nil {
-		writeJSON(w, http.StatusNotFound, model.ErrorResponse{Error: "project zip file not found or expired"})
-		return
-	}
-
-	data, err := os.ReadFile(zipPath)
+	data, err := h.store.GetZipData(ctx, sessionID)
 	if err != nil {
 		writeJSON(w, http.StatusNotFound, model.ErrorResponse{Error: "project zip file not found or expired"})
 		return
@@ -272,8 +272,7 @@ func (h *Handlers) ServeZipProject(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(data)
 
-	_ = os.Remove(zipPath)
-	_ = h.store.DeleteZipPath(context.Background(), sessionID)
+	_ = h.store.DeleteZipData(context.Background(), sessionID)
 }
 
 func (h *Handlers) SessionByID(w http.ResponseWriter, r *http.Request) {

@@ -16,9 +16,9 @@ type SessionStore interface {
 	GetJSON(ctx context.Context, sessionID string) (json.RawMessage, error)
 	PutEditorImageSource(ctx context.Context, sessionID string, payload any, ttl time.Duration) error
 	GetEditorImageSource(ctx context.Context, sessionID string) (json.RawMessage, error)
-	PutZipPath(ctx context.Context, sessionID, path string, ttl time.Duration) error
-	GetZipPath(ctx context.Context, sessionID string) (string, error)
-	DeleteZipPath(ctx context.Context, sessionID string) error
+	PutZipData(ctx context.Context, sessionID string, data []byte, ttl time.Duration) error
+	GetZipData(ctx context.Context, sessionID string) ([]byte, error)
+	DeleteZipData(ctx context.Context, sessionID string) error
 }
 
 type RedisStore struct {
@@ -69,17 +69,17 @@ func (s *RedisStore) GetEditorImageSource(ctx context.Context, sessionID string)
 	return json.RawMessage(val), nil
 }
 
-func (s *RedisStore) PutZipPath(ctx context.Context, sessionID, path string, ttl time.Duration) error {
+func (s *RedisStore) PutZipData(ctx context.Context, sessionID string, data []byte, ttl time.Duration) error {
 	key := fmt.Sprintf("zip_project:%s", sessionID)
-	return s.rdb.Set(ctx, key, path, ttl).Err()
+	return s.rdb.Set(ctx, key, data, ttl).Err()
 }
 
-func (s *RedisStore) GetZipPath(ctx context.Context, sessionID string) (string, error) {
+func (s *RedisStore) GetZipData(ctx context.Context, sessionID string) ([]byte, error) {
 	key := fmt.Sprintf("zip_project:%s", sessionID)
-	return s.rdb.Get(ctx, key).Result()
+	return s.rdb.Get(ctx, key).Bytes()
 }
 
-func (s *RedisStore) DeleteZipPath(ctx context.Context, sessionID string) error {
+func (s *RedisStore) DeleteZipData(ctx context.Context, sessionID string) error {
 	key := fmt.Sprintf("zip_project:%s", sessionID)
 	return s.rdb.Del(ctx, key).Err()
 }

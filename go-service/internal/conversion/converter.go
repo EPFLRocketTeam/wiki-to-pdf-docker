@@ -141,14 +141,14 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 	return ConvertResult{Latex: string(packagedLatex), SessionID: sessionID, ZipPath: zipPath}, nil
 }
 
-func (c *Converter) GeneratePDF(ctx context.Context, latexCode, assetsZipPath string) ([]byte, error) {
+func (c *Converter) GeneratePDF(ctx context.Context, latexCode string, assetsZipData []byte) ([]byte, error) {
 	workingDir, err := os.MkdirTemp("", "wiki-to-pdf-compile-*")
 	if err != nil {
 		return nil, err
 	}
 	defer os.RemoveAll(workingDir)
-	if assetsZipPath != "" {
-		if err := unzipDirectory(assetsZipPath, workingDir); err != nil {
+	if len(assetsZipData) != 0 {
+		if err := unzipData(assetsZipData, workingDir); err != nil {
 			return nil, fmt.Errorf("extract conversion assets: %w", err)
 		}
 	}
@@ -304,8 +304,14 @@ func (c *Converter) validateWikiImageAssets(latexText string, mapping map[string
 			continue
 		}
 		ref := strings.TrimSpace(match[1])
-		if strings.HasPrefix(ref, "/app/ert_wiki/") && mapping[ref] == "" {
+		if mapping[ref] != "" || strings.HasPrefix(ref, `\assetsDirectory/`) {
+			continue
+		}
+		if strings.HasPrefix(ref, "/app/ert_wiki/") {
 			return fmt.Errorf("Wiki.js image %q is unavailable locally; create the editor session with imageBaseUrl and, for protected images, imageAuthToken", ref)
+		}
+		if filepath.IsAbs(ref) {
+			return fmt.Errorf("generated image %q could not be packaged; check the diagram source and required conversion tool", ref)
 		}
 	}
 	return nil
@@ -389,12 +395,11 @@ func rewriteAssetReferences(mainTexPath string, mapping map[string]string) error
 	return os.WriteFile(mainTexPath, []byte(content), 0o644)
 }
 
-func unzipDirectory(zipPath, destination string) error {
-	reader, err := zip.OpenReader(zipPath)
+func unzipData(data []byte, destination string) error {
+	reader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
 
 	for _, file := range reader.File {
 		target := filepath.Join(destination, file.Name)
