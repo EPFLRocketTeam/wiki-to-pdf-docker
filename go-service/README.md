@@ -1,6 +1,6 @@
-# Go Service Scaffold
+# Go Service
 
-This folder contains an incremental Go migration scaffold for the wiki-to-pdf backend.
+This folder contains the Go implementation of the wiki-to-pdf application.
 
 ## What is implemented
 
@@ -32,10 +32,6 @@ This folder contains an incremental Go migration scaffold for the wiki-to-pdf ba
   - PDF preview and compile output
   - Overleaf deep-link using zip session artifacts
 
-## What is intentionally deferred
-
-- Complete visual parity with legacy Flask pages and all edge-case client behaviors.
-
 ## Run locally
 
 1. Ensure dependencies are installed and available on PATH:
@@ -64,12 +60,6 @@ go run ./cmd/server
 - `ASSETS_TEMPLATE_DIR` (default `/app/latex_templates/template_images`)
 - `ERT_WIKI_ROOT` (default `/app/ert_wiki`)
 - `LOG_LEVEL` (default `info`)
-
-## Suggested rollout
-
-1. Deploy the Go backend.
-2. Validate conversion and PDF generation with recorded requests.
-3. Remove the legacy Python service once parity is confirmed.
 
 ## Contract replay tests
 

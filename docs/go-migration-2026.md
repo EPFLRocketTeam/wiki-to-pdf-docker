@@ -1,11 +1,11 @@
-# Go Migration Plan (2026)
+# Go Architecture (2026)
 
 ## Goals
 
-- Preserve existing API behavior while replacing the Flask runtime with Go.
+- Provide the wiki-to-PDF API and frontend through Go.
 - Keep Pandoc, Lua filter, and LuaLaTeX toolchain behavior equivalent.
 - Improve operational safety: timeouts, graceful shutdown, structured logs, strict config.
-- Support a zero-downtime migration by running Python and Go services in parallel.
+- Run a single Go application service alongside Redis.
 
 ## Current API Surface
 
@@ -31,9 +31,7 @@
   - Asset normalization and zip project generation for Overleaf.
 - PDF pipeline:
   - Two-pass LuaLaTeX compile (draft then normal), bounded by context timeout.
-- Static/templates:
-  - Phase 1: API-first migration, keep existing frontend served by Python or reverse proxy.
-  - Phase 2: move templates to Go (`html/template`) or an SPA frontend.
+- Static/templates: embedded SPA frontend served by the Go application.
 
 ## Best Practices (Aug 2026)
 
@@ -46,14 +44,6 @@
 - Keep secrets out of logs; redact auth tokens.
 - Add readiness checks that verify Redis and required binaries.
 - Publish metrics/traces (OpenTelemetry) in production deployment.
-
-## Migration Strategy
-
-1. Phase A: Stand up Go service with API compatibility for core endpoints.
-2. Phase B: Put Go behind reverse proxy on a shadow path and compare outputs.
-3. Phase C: Route write and conversion traffic to Go; keep Python as fallback.
-4. Phase D: Migrate template rendering or serve a decoupled frontend.
-5. Phase E: Remove Python stack and simplify image/container layers.
 
 ## Compatibility Notes
 

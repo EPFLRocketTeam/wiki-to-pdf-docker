@@ -14,7 +14,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	ca-certificates \
 	pandoc \
-	python3-pygments \
 	curl \
 	wget \
 	git \
@@ -36,7 +35,7 @@ RUN for package in \
 	graphicx titlesec csquotes enumitem caption subcaption hyperref float xcolor \
 	amsmath amssymb amsfonts booktabs adjustbox calc colortbl array etoolbox \
 	wrapfig ragged2e textcomp gensymb pdflscape pdfpages tikz geometry lastpage \
-	helvet soul datetime2 longtable fancyhdr fancyvrb minted tcolorbox \
+	helvet soul datetime2 longtable fancyhdr fancyvrb eso-pic tcolorbox \
 	fontawesome5 lineno bookmark xurl; do \
 	kpsewhich "${package}.sty" >/dev/null || { echo "missing LaTeX package: ${package}"; exit 1; }; \
 	done

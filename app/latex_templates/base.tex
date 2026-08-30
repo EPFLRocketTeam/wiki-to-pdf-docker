@@ -29,25 +29,20 @@
 \IfFileExists{tikz.sty}{\usepackage{tikz}}{}
 \usepackage{geometry}
 \IfFileExists{lastpage.sty}{\usepackage{lastpage}}{}
+\IfFileExists{phvr8t.tfm}{\usepackage[scaled]{helvet}}{}
 \IfFileExists{soul.sty}{\usepackage{soul}}{}
 \IfFileExists{datetime2.sty}{\usepackage[useregional]{datetime2}}{}
 \usepackage{longtable}
 \usepackage{fancyhdr}
 \usepackage{fancyvrb}
 \IfFileExists{eso-pic.sty}{\usepackage{eso-pic}}{%
-    \newcommand{\AddToShipoutPicture}[1]{}
-    \newcommand{\ClearShipoutPicture}{}
-}
-\IfFileExists{minted.sty}{\usepackage{minted}}{%
-    % Fallback when minted is unavailable: map minted env to Verbatim.
-    \newenvironment{minted}[2][]{\Verbatim}{\endVerbatim}
+    \newcommand{\AddToShipoutPictureBG}[1]{}
+    \newcommand{\AtPageLowerLeft}[1]{}
 }
 \IfFileExists{tcolorbox.sty}{\usepackage[most]{tcolorbox}}{%
-    % Fallback box environment if tcolorbox is unavailable.
     \newenvironment{tcolorbox}[1][]{\begin{quote}}{\end{quote}}
 }
 \IfFileExists{fontawesome5.sty}{\usepackage{fontawesome5}}{%
-    % Fallback icons used by wiki quote blocks.
     \newcommand{\faInfoCircle}{[i]}
     \newcommand{\faCheckCircle}{[ok]}
     \newcommand{\faExclamationTriangle}{[!]}
@@ -142,14 +137,7 @@ $endif$
 % Use a variable so different templates can provide different images.
 $if(backgroundImage)$
 \newcommand\BackgroundPic{
-    \put(-3.1pt,0){
-        \parbox[b][\paperheight]{\paperwidth}{
-            \vfill
-            \centering
-            \includegraphics[width=\paperwidth,height=\paperheight]{\assetsDirectory/$backgroundImage$}
-            \vfill
-        }
-    }
+    \AtPageLowerLeft{\includegraphics[width=\paperwidth,height=\paperheight]{\assetsDirectory/$backgroundImage$}}
 }
 $endif$
 
@@ -247,7 +235,9 @@ $endif$
 
 \begin{document}
 
-% Background shipout is disabled for compatibility with slim TeX runtimes.
+$if(backgroundImage)$
+\AddToShipoutPictureBG*{\BackgroundPic}
+$endif$
 
 % HEADER AND FOOTER
 \let\oldheadrule\headrule

@@ -2,12 +2,9 @@ package contract_test
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -38,10 +35,7 @@ type scenarioStep struct {
 }
 
 type compareRule struct {
-	Type              string   `json:"type"`
-	IgnoreFields      []string `json:"ignoreFields"`
-	PDFByteDeltaMax   int      `json:"pdfByteDeltaMax"`
-	PDFByteDeltaRatio float64  `json:"pdfByteDeltaRatio"`
+	Type string `json:"type"`
 }
 
 func TestContractFixtures(t *testing.T) {
@@ -211,43 +205,10 @@ func loadFixtures(dir string) ([]fixture, error) {
 			if fx.Steps[i].Compare.Type == "" {
 				fx.Steps[i].Compare.Type = "json"
 			}
-			if fx.Steps[i].Compare.PDFByteDeltaMax == 0 {
-				fx.Steps[i].Compare.PDFByteDeltaMax = 2048
-			}
-			if fx.Steps[i].Compare.PDFByteDeltaRatio == 0 {
-				fx.Steps[i].Compare.PDFByteDeltaRatio = 0.05
-			}
-		}
-		if fx.Compare.PDFByteDeltaMax == 0 {
-			fx.Compare.PDFByteDeltaMax = 2048
-		}
-		if fx.Compare.PDFByteDeltaRatio == 0 {
-			fx.Compare.PDFByteDeltaRatio = 0.05
 		}
 		out = append(out, fx)
 	}
 	return out, nil
-}
-
-func compareJSONBodies(pyBody, goBody []byte, ignoreFields []string) error {
-	var py any
-	if err := json.Unmarshal(pyBody, &py); err != nil {
-		return fmt.Errorf("python response not json: %w", err)
-	}
-	var goResp any
-	if err := json.Unmarshal(goBody, &goResp); err != nil {
-		return fmt.Errorf("go response not json: %w", err)
-	}
-
-	py = stripFields(py, ignoreFields)
-	goResp = stripFields(goResp, ignoreFields)
-
-	if !deepEqualJSON(py, goResp) {
-		pyNorm, _ := json.Marshal(py)
-		goNorm, _ := json.Marshal(goResp)
-		return fmt.Errorf("normalized JSON mismatch: python=%s go=%s", pyNorm, goNorm)
-	}
-	return nil
 }
 
 func ensureJSONBody(body []byte) error {
@@ -255,37 +216,6 @@ func ensureJSONBody(body []byte) error {
 	if err := json.Unmarshal(body, &parsed); err != nil {
 		return fmt.Errorf("response is not json: %w", err)
 	}
-	return nil
-}
-
-func compareZIPBodies(pyHeaders http.Header, pyBody []byte, goHeaders http.Header, goBody []byte, rule compareRule) error {
-	if !strings.HasPrefix(pyHeaders.Get("Content-Type"), "application/zip") {
-		return fmt.Errorf("python content type is not application/zip: %s", pyHeaders.Get("Content-Type"))
-	}
-	if !strings.HasPrefix(goHeaders.Get("Content-Type"), "application/zip") {
-		return fmt.Errorf("go content type is not application/zip: %s", goHeaders.Get("Content-Type"))
-	}
-	if len(pyBody) < 4 || string(pyBody[:2]) != "PK" {
-		return fmt.Errorf("python body does not look like ZIP")
-	}
-	if len(goBody) < 4 || string(goBody[:2]) != "PK" {
-		return fmt.Errorf("go body does not look like ZIP")
-	}
-
-	pySize := len(pyBody)
-	goSize := len(goBody)
-	delta := int(math.Abs(float64(pySize - goSize)))
-
-	ratioBase := pySize
-	if ratioBase == 0 {
-		ratioBase = 1
-	}
-	ratio := float64(delta) / float64(ratioBase)
-
-	if delta > rule.PDFByteDeltaMax && ratio > rule.PDFByteDeltaRatio {
-		return fmt.Errorf("zip size mismatch: python=%d go=%d delta=%d ratio=%.4f", pySize, goSize, delta, ratio)
-	}
-
 	return nil
 }
 
@@ -299,88 +229,6 @@ func ensureZIPBody(headers http.Header, body []byte) error {
 	return nil
 }
 
-func stripFields(v any, ignoreFields []string) any {
-	ignore := map[string]struct{}{}
-	for _, k := range ignoreFields {
-		ignore[k] = struct{}{}
-	}
-
-	var walk func(any) any
-	walk = func(node any) any {
-		switch n := node.(type) {
-		case map[string]any:
-			out := make(map[string]any, len(n))
-			for k, v := range n {
-				if _, skip := ignore[k]; skip {
-					continue
-				}
-				out[k] = walk(v)
-			}
-			return out
-		case []any:
-			out := make([]any, len(n))
-			for i := range n {
-				out[i] = walk(n[i])
-			}
-			return out
-		default:
-			return n
-		}
-	}
-
-	return walk(v)
-}
-
-func deepEqualJSON(a, b any) bool {
-	ab, errA := json.Marshal(a)
-	bb, errB := json.Marshal(b)
-	if errA != nil || errB != nil {
-		return false
-	}
-	return bytes.Equal(ab, bb)
-}
-
-func comparePDFBodies(pyHeaders http.Header, pyBody []byte, goHeaders http.Header, goBody []byte, rule compareRule) error {
-	if !strings.HasPrefix(pyHeaders.Get("Content-Type"), "application/pdf") {
-		return fmt.Errorf("python content type is not application/pdf: %s", pyHeaders.Get("Content-Type"))
-	}
-	if !strings.HasPrefix(goHeaders.Get("Content-Type"), "application/pdf") {
-		return fmt.Errorf("go content type is not application/pdf: %s", goHeaders.Get("Content-Type"))
-	}
-	if !bytes.HasPrefix(pyBody, []byte("%PDF")) {
-		return fmt.Errorf("python body does not look like a PDF")
-	}
-	if !bytes.HasPrefix(goBody, []byte("%PDF")) {
-		return fmt.Errorf("go body does not look like a PDF")
-	}
-
-	pySize := len(pyBody)
-	goSize := len(goBody)
-	delta := int(math.Abs(float64(pySize - goSize)))
-
-	ratioBase := pySize
-	if ratioBase == 0 {
-		ratioBase = 1
-	}
-	ratio := float64(delta) / float64(ratioBase)
-
-	if delta > rule.PDFByteDeltaMax && ratio > rule.PDFByteDeltaRatio {
-		return fmt.Errorf(
-			"pdf size mismatch: python=%d go=%d delta=%d ratio=%.4f maxDelta=%d maxRatio=%.4f pySha=%s goSha=%s",
-			pySize,
-			goSize,
-			delta,
-			ratio,
-			rule.PDFByteDeltaMax,
-			rule.PDFByteDeltaRatio,
-			sha256Hex(pyBody),
-			sha256Hex(goBody),
-		)
-	}
-
-	return nil
-}
-
 func ensurePDFBody(headers http.Header, body []byte) error {
 	if !strings.HasPrefix(headers.Get("Content-Type"), "application/pdf") {
 		return fmt.Errorf("content type is not application/pdf: %s", headers.Get("Content-Type"))
@@ -389,11 +237,6 @@ func ensurePDFBody(headers http.Header, body []byte) error {
 		return fmt.Errorf("body does not look like a PDF")
 	}
 	return nil
-}
-
-func sha256Hex(b []byte) string {
-	h := sha256.Sum256(b)
-	return hex.EncodeToString(h[:])
 }
 
 func envOr(key, fallback string) string {
