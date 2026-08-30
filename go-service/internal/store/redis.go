@@ -14,6 +14,8 @@ type SessionStore interface {
 	Ping(ctx context.Context) error
 	PutJSON(ctx context.Context, payload any, ttl time.Duration) (string, error)
 	GetJSON(ctx context.Context, sessionID string) (json.RawMessage, error)
+	PutEditorImageSource(ctx context.Context, sessionID string, payload any, ttl time.Duration) error
+	GetEditorImageSource(ctx context.Context, sessionID string) (json.RawMessage, error)
 	PutZipPath(ctx context.Context, sessionID, path string, ttl time.Duration) error
 	GetZipPath(ctx context.Context, sessionID string) (string, error)
 	DeleteZipPath(ctx context.Context, sessionID string) error
@@ -45,6 +47,22 @@ func (s *RedisStore) PutJSON(ctx context.Context, payload any, ttl time.Duration
 
 func (s *RedisStore) GetJSON(ctx context.Context, sessionID string) (json.RawMessage, error) {
 	val, err := s.rdb.Get(ctx, sessionID).Result()
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(val), nil
+}
+
+func (s *RedisStore) PutEditorImageSource(ctx context.Context, sessionID string, payload any, ttl time.Duration) error {
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	return s.rdb.Set(ctx, fmt.Sprintf("editor_image_source:%s", sessionID), b, ttl).Err()
+}
+
+func (s *RedisStore) GetEditorImageSource(ctx context.Context, sessionID string) (json.RawMessage, error) {
+	val, err := s.rdb.Get(ctx, fmt.Sprintf("editor_image_source:%s", sessionID)).Result()
 	if err != nil {
 		return nil, err
 	}

@@ -109,6 +109,10 @@ func (h *Handlers) Convert(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(r.Context(), h.cfg.ToolTimeout)
 	defer cancel()
+	if err := h.applyEditorImageSource(ctx, &req); err != nil {
+		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+		return
+	}
 
 	result, err := h.converter.ConvertAndPackage(ctx, req)
 	if err != nil {
@@ -142,7 +146,17 @@ func (h *Handlers) GeneratePDF(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), h.cfg.ToolTimeout)
 	defer cancel()
 
-	pdfBytes, err := h.converter.GeneratePDF(ctx, req.LatexCode)
+	zipPath := ""
+	if req.AssetSessionID != "" {
+		var err error
+		zipPath, err = h.store.GetZipPath(ctx, req.AssetSessionID)
+		if err != nil {
+			writeJSON(w, http.StatusNotFound, model.ErrorResponse{Error: "conversion assets not found or expired"})
+			return
+		}
+	}
+
+	pdfBytes, err := h.converter.GeneratePDF(ctx, req.LatexCode, zipPath)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: "failed to compile PDF", Message: err.Error()})
 		return
@@ -203,7 +217,6 @@ func (h *Handlers) CreateEditorSession(w http.ResponseWriter, r *http.Request) {
 			LineNumbersEnabled: req.LineNumbersEnabled,
 		},
 	}
-
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
@@ -211,6 +224,16 @@ func (h *Handlers) CreateEditorSession(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: fmt.Sprintf("failed storing editor session: %v", err)})
 		return
+	}
+	if strings.TrimSpace(req.ImageBaseURL) != "" || strings.TrimSpace(req.ImageAuthToken) != "" {
+		imageSource := model.ImageSource{
+			BaseURL:   strings.TrimSpace(req.ImageBaseURL),
+			AuthToken: strings.TrimSpace(req.ImageAuthToken),
+		}
+		if err := h.store.PutEditorImageSource(ctx, id, imageSource, 24*time.Hour); err != nil {
+			writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: fmt.Sprintf("failed storing private image source: %v", err)})
+			return
+		}
 	}
 	writeJSON(w, http.StatusCreated, model.EditorSessionResponse{
 		SessionID: id,
@@ -268,6 +291,23 @@ func (h *Handlers) SessionByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(raw)
+}
+
+func (h *Handlers) applyEditorImageSource(ctx context.Context, req *model.ConvertRequest) error {
+	if req.EditorSessionID == "" {
+		return nil
+	}
+	raw, err := h.store.GetEditorImageSource(ctx, req.EditorSessionID)
+	if err != nil {
+		return nil
+	}
+	var imageSource model.ImageSource
+	if err := json.Unmarshal(raw, &imageSource); err != nil {
+		return fmt.Errorf("invalid private image source")
+	}
+	req.ImageBaseURL = imageSource.BaseURL
+	req.ImageAuthToken = imageSource.AuthToken
+	return nil
 }
 
 func decodeJSON(r *http.Request, out any) error {

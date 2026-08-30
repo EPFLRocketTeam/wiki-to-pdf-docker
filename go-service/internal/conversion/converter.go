@@ -61,6 +61,7 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 		"footerText":      req.FooterText,
 		"lineNumbers":     req.LineNumbersEnabled,
 		"assetsDirectory": c.cfg.AssetsTemplateDir,
+		"imageBaseUrl":    req.ImageBaseURL,
 	}
 
 	metaPath := filepath.Join(workingDir, "metadata.yaml")
@@ -117,8 +118,12 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 		return ConvertResult{}, err
 	}
 
-	mapping := c.collectAssets(ctx, safeLatex, projectDir)
+	mapping := c.collectAssets(ctx, safeLatex, projectDir, req.ImageAuthToken)
 	if err := rewriteAssetReferences(mainTexPath, mapping); err != nil {
+		return ConvertResult{}, err
+	}
+	packagedLatex, err := os.ReadFile(mainTexPath)
+	if err != nil {
 		return ConvertResult{}, err
 	}
 
@@ -128,15 +133,20 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 		return ConvertResult{}, err
 	}
 
-	return ConvertResult{Latex: latex, SessionID: sessionID, ZipPath: zipPath}, nil
+	return ConvertResult{Latex: string(packagedLatex), SessionID: sessionID, ZipPath: zipPath}, nil
 }
 
-func (c *Converter) GeneratePDF(ctx context.Context, latexCode string) ([]byte, error) {
+func (c *Converter) GeneratePDF(ctx context.Context, latexCode, assetsZipPath string) ([]byte, error) {
 	workingDir, err := os.MkdirTemp("", "wiki-to-pdf-compile-*")
 	if err != nil {
 		return nil, err
 	}
 	defer os.RemoveAll(workingDir)
+	if assetsZipPath != "" {
+		if err := unzipDirectory(assetsZipPath, workingDir); err != nil {
+			return nil, fmt.Errorf("extract conversion assets: %w", err)
+		}
+	}
 
 	texPath := filepath.Join(workingDir, "document.tex")
 	pdfPath := filepath.Join(workingDir, "document.pdf")
@@ -177,7 +187,7 @@ func runLuaLatex(ctx context.Context, binary, texPath, outputDir string) error {
 	return nil
 }
 
-func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir string) map[string]string {
+func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir, authToken string) map[string]string {
 	imgRe := regexp.MustCompile(`\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}`)
 	inputRe := regexp.MustCompile(`\\(?:input|include)\{([^}]+)\}`)
 	allRefs := append(imgRe.FindAllStringSubmatch(latexText, -1), inputRe.FindAllStringSubmatch(latexText, -1)...)
@@ -194,7 +204,7 @@ func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir str
 		unescaped := strings.ReplaceAll(orig, `\ `, " ")
 
 		if strings.HasPrefix(unescaped, "http://") || strings.HasPrefix(unescaped, "https://") {
-			if rel, err := c.downloadAsset(ctx, projectDir, unescaped); err == nil {
+			if rel, err := c.downloadAsset(ctx, projectDir, unescaped, authToken); err == nil {
 				mapping[orig] = rel
 			}
 			continue
@@ -223,10 +233,17 @@ func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir str
 	return mapping
 }
 
-func (c *Converter) downloadAsset(ctx context.Context, projectDir, rawURL string) (string, error) {
+func (c *Converter) downloadAsset(ctx context.Context, projectDir, rawURL, authToken string) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return "", err
+	}
+	if authToken != "" {
+		if strings.HasPrefix(strings.ToLower(authToken), "bearer ") {
+			req.Header.Set("Authorization", authToken)
+		} else {
+			req.Header.Set("Authorization", "Bearer "+authToken)
+		}
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -307,6 +324,44 @@ func rewriteAssetReferences(mainTexPath string, mapping map[string]string) error
 		content = strings.ReplaceAll(content, oldRef, newRef)
 	}
 	return os.WriteFile(mainTexPath, []byte(content), 0o644)
+}
+
+func unzipDirectory(zipPath, destination string) error {
+	reader, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	for _, file := range reader.File {
+		target := filepath.Join(destination, file.Name)
+		if !strings.HasPrefix(target, filepath.Clean(destination)+string(os.PathSeparator)) {
+			return fmt.Errorf("invalid archive path %q", file.Name)
+		}
+		if file.FileInfo().IsDir() {
+			if err := os.MkdirAll(target, 0o755); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return err
+		}
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+		if err == nil {
+			_, err = io.Copy(dst, src)
+			dst.Close()
+		}
+		src.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func zipDirectory(srcDir, zipPath string) error {

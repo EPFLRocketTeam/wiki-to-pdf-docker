@@ -78,9 +78,17 @@ large documents and their contents do not need to be placed in a URL.
   "documentId": "RPT-42",
   "template": "space-race",
   "footerText": "Internal",
-  "lineNumbersEnabled": false
+  "lineNumbersEnabled": false,
+  "imageBaseUrl": "https://wiki.example.ch",
+  "imageAuthToken": "short-lived-wiki-token"
 }
 ```
+
+`imageBaseUrl` resolves relative Markdown image paths. When `imageAuthToken` is
+provided, it is sent as a Bearer token while the server downloads those images.
+Both values are stored in a private Redis record for the session lifetime and
+are never returned by the editor-session API, included in the edit URL, or
+written to the generated LaTex project.
 
 ## Contract replay tests
 

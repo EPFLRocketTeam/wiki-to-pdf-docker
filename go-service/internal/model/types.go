@@ -14,6 +14,7 @@ type GetAccessTokenRequest struct {
 
 type ConvertRequest struct {
 	Markdown           string `json:"markdown"`
+	EditorSessionID    string `json:"editor_session_id,omitempty"`
 	Template           string `json:"template"`
 	Author             string `json:"author"`
 	Date               string `json:"date"`
@@ -21,6 +22,8 @@ type ConvertRequest struct {
 	DocumentID         string `json:"documentId"`
 	FooterText         string `json:"footerText"`
 	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
+	ImageBaseURL       string `json:"-"`
+	ImageAuthToken     string `json:"-"`
 }
 
 type ConvertResponse struct {
@@ -30,8 +33,9 @@ type ConvertResponse struct {
 }
 
 type GeneratePDFRequest struct {
-	LatexCode string `json:"latex_code"`
-	Title     string `json:"title"`
+	LatexCode      string `json:"latex_code"`
+	Title          string `json:"title"`
+	AssetSessionID string `json:"asset_session_id,omitempty"`
 }
 
 type StoreResponse struct {
@@ -49,6 +53,8 @@ type EditorSessionRequest struct {
 	DocumentID         string `json:"documentId"`
 	FooterText         string `json:"footerText"`
 	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
+	ImageBaseURL       string `json:"imageBaseUrl,omitempty"`
+	ImageAuthToken     string `json:"imageAuthToken,omitempty"`
 }
 
 type EditorSessionResponse struct {
@@ -59,6 +65,13 @@ type EditorSessionResponse struct {
 type EditorSession struct {
 	Page     EditorSessionPage     `json:"page"`
 	Settings EditorSessionSettings `json:"settings"`
+}
+
+// ImageSource is retained in a separate private Redis record and is never
+// returned to a browser or embedded into the conversion output.
+type ImageSource struct {
+	BaseURL   string `json:"baseUrl"`
+	AuthToken string `json:"authToken"`
 }
 
 type EditorSessionPage struct {

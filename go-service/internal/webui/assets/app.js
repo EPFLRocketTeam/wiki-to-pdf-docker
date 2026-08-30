@@ -283,7 +283,8 @@ async function mountIndex() {
       const title = el("title").value || "document";
       const response = await postJSON("/generate-pdf", {
         latex_code: editors.getLatex(),
-        title
+        title,
+        asset_session_id: lastConvertSessionID
       });
 
       if (!response.ok) {
@@ -371,6 +372,7 @@ async function mountEdit() {
     try {
       const response = await postJSON("/convert", {
         markdown: editors.getMarkdown(),
+        editor_session_id: sessionID,
         author: el("author").value,
         date: el("date").value || currentDateISO(),
         title: el("title").value,
@@ -402,7 +404,8 @@ async function mountEdit() {
     try {
       const response = await postJSON("/generate-pdf", {
         latex_code: lastLatex || editors.getLatex(),
-        title: el("title").value || "document"
+        title: el("title").value || "document",
+        asset_session_id: lastZipSessionID
       });
       if (!response.ok) {
         appendOutput("Compile failed: " + JSON.stringify(await response.json()));

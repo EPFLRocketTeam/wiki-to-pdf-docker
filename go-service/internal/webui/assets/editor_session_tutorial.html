@@ -36,7 +36,9 @@ Content-Type: application/json
   "documentId": "RPT-42",
   "template": "space-race",
   "footerText": "Internal",
-  "lineNumbersEnabled": false
+  "lineNumbersEnabled": false,
+  "imageBaseUrl": "https://wiki.example.ch",
+  "imageAuthToken": "your-short-lived-wiki-token"
 }</pre>
 
       <h2>2. Read the response</h2>
@@ -48,6 +50,9 @@ Content-Type: application/json
       <h2>3. Open the editor</h2>
       <p>Combine the API host with <code>edit_url</code>, then open it in a new tab. For example, when running locally: <code>http://127.0.0.1:8000/edit?session_id=…</code>.</p>
       <p class="note">The Markdown is stored server-side for 24 hours. Only the random session ID is included in the URL, avoiding URL-length limits and exposing document content in browser history or logs.</p>
+
+      <h2>Private Wiki.js images</h2>
+      <p>For relative image URLs in Markdown, optionally provide <code>imageBaseUrl</code> and <code>imageAuthToken</code>. The server combines the base URL with the image path and sends the token as an Authorization Bearer header while it downloads the image for conversion. These fields are stored only on the server and are not returned to the editor or included in the URL.</p>
 
       <h2>Browser integration</h2>
       <p>After receiving the response in browser JavaScript, call <code>window.open(response.edit_url, "_blank")</code> from a user-initiated action. Browsers can block new tabs that are not opened from a click or similar interaction.</p>

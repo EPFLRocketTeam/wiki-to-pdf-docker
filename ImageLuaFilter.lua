@@ -2,6 +2,12 @@ local pandoc = require 'pandoc'
 local system = require 'pandoc.system'
 -- Requires the draw.io CLI to be installed (e.g., `draw.io` binary in your PATH)
 
+local image_base_url = ""
+
+function Meta(meta)
+  image_base_url = pandoc.utils.stringify(meta.imageBaseUrl or "")
+end
+
 -- local base64 = require("mime") -- LuaSocket's MIME module for base64 decoding
 local function decode_base64(input)
   local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
@@ -89,10 +95,13 @@ function Image(elem)
   -- Decode any URL-encoded spaces, then trim any leading/trailing whitespace
   src = src:gsub("%%20", " "):gsub("^%s*(.-)%s*$", "%1")
 
-  -- Remove any leading slashes to avoid double slashes when prepending the base path
-  src = src:gsub("^%s*/+", "")
-
-  src = "/app/ert_wiki/" .. src
+  if not src:match("^https?://") then
+    if image_base_url ~= "" then
+      src = image_base_url:gsub("/+$", "") .. "/" .. src:gsub("^%s*/+", "")
+    else
+      src = "/app/ert_wiki/" .. src:gsub("^%s*/+", "")
+    end
+  end
 
   local latex_code = string.format("\\includegraphics[width=\\linewidth, height=\\textheight, keepaspectratio]{%s}", src)
   return pandoc.RawInline("latex", latex_code)
