@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prefilled Editor API Tutorial</title>
+  <style>
+    :root { --bg: #f3efe4; --ink: #17222a; --brand: #0c4f66; --edge: #d8d0bf; --card: #fffdfa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 24px; }
+    .panel { background: var(--card); border: 1px solid var(--edge); border-radius: 14px; padding: 24px; box-shadow: 0 6px 18px rgba(0, 0, 0, .04); }
+    h1, h2 { color: var(--brand); }
+    h1 { margin-top: 0; }
+    code { background: #e8f2f5; border-radius: 4px; padding: 1px 4px; }
+    pre { overflow-x: auto; margin: 12px 0; padding: 14px; border: 1px solid #d3cab9; border-radius: 8px; background: #fff; line-height: 1.45; }
+    a { color: #0b5b8c; }
+    .note { padding: 12px; border-left: 4px solid #0c4f66; background: #e8f2f5; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <article class="panel">
+      <h1>Open a prefilled editor with the API</h1>
+      <p>Use <code>POST /editor-sessions</code> to send Markdown and conversion settings. The response contains an <code>edit_url</code>; open it in a new browser tab to review, edit, convert, and compile the document.</p>
+
+      <h2>1. Create an editor session</h2>
+      <pre>POST /editor-sessions
+Content-Type: application/json
+
+{
+  "markdown": "# Launch report\n\nReady to review.",
+  "title": "Launch report",
+  "author": "Jane Doe",
+  "date": "2026-08-30",
+  "documentId": "RPT-42",
+  "template": "space-race",
+  "footerText": "Internal",
+  "lineNumbersEnabled": false
+}</pre>
+
+      <h2>2. Read the response</h2>
+      <pre>{
+  "session_id": "2ec6b13f-a7c2-465f-920c-b674884b193b",
+  "edit_url": "/edit?session_id=2ec6b13f-a7c2-465f-920c-b674884b193b"
+}</pre>
+
+      <h2>3. Open the editor</h2>
+      <p>Combine the API host with <code>edit_url</code>, then open it in a new tab. For example, when running locally: <code>http://127.0.0.1:8000/edit?session_id=…</code>.</p>
+      <p class="note">The Markdown is stored server-side for 24 hours. Only the random session ID is included in the URL, avoiding URL-length limits and exposing document content in browser history or logs.</p>
+
+      <h2>Browser integration</h2>
+      <p>After receiving the response in browser JavaScript, call <code>window.open(response.edit_url, "_blank")</code> from a user-initiated action. Browsers can block new tabs that are not opened from a click or similar interaction.</p>
+
+      <p><a href="/">Back to Wiki to PDF</a></p>
+    </article>
+  </main>
+</body>
+</html>

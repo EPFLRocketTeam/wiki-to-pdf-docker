@@ -5,38 +5,49 @@
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
 \usepackage{graphicx}
-\usepackage{titlesec}
-\usepackage{csquotes}
-\usepackage{enumitem}
-\usepackage[font=small,skip=0pt]{caption}
-\usepackage{subcaption}
+\IfFileExists{titlesec.sty}{\usepackage{titlesec}}{}
+\IfFileExists{csquotes.sty}{\usepackage{csquotes}}{}
+\IfFileExists{enumitem.sty}{\usepackage{enumitem}}{}
+\IfFileExists{caption.sty}{\usepackage[font=small,skip=0pt]{caption}}{}
+\IfFileExists{subcaption.sty}{\usepackage{subcaption}}{}
 \usepackage{hyperref}
-\usepackage{float}
+\IfFileExists{float.sty}{\usepackage{float}}{}
 \usepackage{xcolor}
 \usepackage{amsmath, amssymb, amsfonts}
 \usepackage{booktabs}
-\usepackage{adjustbox}
+\IfFileExists{adjustbox.sty}{\usepackage{adjustbox}}{}
 \usepackage{calc}
-\usepackage{colortbl}
+\IfFileExists{colortbl.sty}{\usepackage{colortbl}}{}
 \usepackage{array}
 \usepackage{etoolbox}
-\usepackage{wrapfig}
-\usepackage{ragged2e}
-\usepackage{textcomp, gensymb}
-\usepackage{pdflscape}
-\usepackage{pdfpages}
-\usepackage{tikz}
+\IfFileExists{wrapfig.sty}{\usepackage{wrapfig}}{}
+\IfFileExists{ragged2e.sty}{\usepackage{ragged2e}}{}
+\IfFileExists{textcomp.sty}{\usepackage{textcomp}}{}
+\IfFileExists{gensymb.sty}{\usepackage{gensymb}}{\newcommand{\degree}{\ensuremath{^\circ}}}
+\IfFileExists{pdflscape.sty}{\usepackage{pdflscape}}{}
+\IfFileExists{pdfpages.sty}{\usepackage{pdfpages}}{}
+\IfFileExists{tikz.sty}{\usepackage{tikz}}{}
 \usepackage{geometry}
-\usepackage{lastpage}
-\usepackage[scaled]{helvet}
-\usepackage{soul}
-\usepackage[useregional]{datetime2}
+\IfFileExists{lastpage.sty}{\usepackage{lastpage}}{}
+\IfFileExists{phvr8t.tfm}{\usepackage[scaled]{helvet}}{}
+\IfFileExists{soul.sty}{\usepackage{soul}}{}
+\IfFileExists{datetime2.sty}{\usepackage[useregional]{datetime2}}{}
 \usepackage{longtable}
 \usepackage{fancyhdr}
 \usepackage{fancyvrb}
-\usepackage{minted}
-\usepackage[most]{tcolorbox}
-\usepackage{fontawesome5}
+\IfFileExists{eso-pic.sty}{\usepackage{eso-pic}}{%
+    \newcommand{\AddToShipoutPictureBG}[1]{}
+    \newcommand{\AtPageLowerLeft}[1]{}
+}
+\IfFileExists{tcolorbox.sty}{\usepackage[most]{tcolorbox}}{%
+    \newenvironment{tcolorbox}[1][]{\begin{quote}}{\end{quote}}
+}
+\IfFileExists{fontawesome5.sty}{\usepackage{fontawesome5}}{%
+    \newcommand{\faInfoCircle}{[i]}
+    \newcommand{\faCheckCircle}{[ok]}
+    \newcommand{\faExclamationTriangle}{[!]}
+    \newcommand{\faTimesCircle}{[x]}
+}
 
 $if(lineNumbers)$
 \usepackage{lineno}
@@ -119,20 +130,14 @@ $endif$
 }
 
 % TITLE - INTER LETTER SPACING
+\providecommand{\sodef}[4]{\newcommand#1[1]{##1}}
 \sodef\an{}{.1em}{0.1em}{0.1em}
 
 % FRONT PAGE BACKGROUND IMAGE
 % Use a variable so different templates can provide different images.
 $if(backgroundImage)$
 \newcommand\BackgroundPic{
-    \put(-3.1pt,0){
-        \parbox[b][\paperheight]{\paperwidth}{
-            \vfill
-            \centering
-            \includegraphics[width=\paperwidth,height=\paperheight]{\assetsDirectory/$backgroundImage$}
-            \vfill
-        }
-    }
+    \AtPageLowerLeft{\includegraphics[width=\paperwidth,height=\paperheight]{\assetsDirectory/$backgroundImage$}}
 }
 $endif$
 
@@ -230,8 +235,9 @@ $endif$
 
 \begin{document}
 
-\AddToShipoutPicture*{\BackgroundPic}
-\ClearShipoutPicture
+$if(backgroundImage)$
+\AddToShipoutPictureBG*{\BackgroundPic}
+$endif$
 
 % HEADER AND FOOTER
 \let\oldheadrule\headrule

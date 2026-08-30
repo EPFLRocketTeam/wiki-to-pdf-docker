@@ -1,0 +1,19 @@
+{
+  "name": "convert-space-race",
+  "method": "POST",
+  "path": "/convert",
+  "request": {
+    "markdown": "# Test Document\n\nThis is a **contract test** payload.\n\n## table section\n| key | value |\n|---|---|\n| mission | phoenix |",
+    "template": "space-race",
+    "author": "Contract Tester",
+    "date": "2026-08-25",
+    "title": "Go Migration Contract",
+    "documentId": "2026_P_SS_DOC",
+    "footerText": "contract-suite",
+    "lineNumbersEnabled": false
+  },
+  "compare": {
+    "type": "json",
+    "ignoreFields": ["session_id"]
+  }
+}

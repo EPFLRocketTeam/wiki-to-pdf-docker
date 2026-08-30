@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How to get access token</title>
+  <style>
+    body { font-family: "IBM Plex Sans", sans-serif; margin: 0; background: #f4f7fa; color: #13212a; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 24px; }
+    .panel { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+    h1 { margin-top: 0; }
+    code { background: #eef3f7; padding: 2px 6px; border-radius: 6px; }
+    a { color: #0b5b8c; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h1>Access Token Guide</h1>
+      <p>Use your Wiki.js GraphQL endpoint and credentials to obtain a JWT via <code>/get-access-token</code>.</p>
+      <ol>
+        <li>Find your GraphQL endpoint, usually ending with <code>/graphql</code>.</li>
+        <li>Send username, password, and endpoint URL to this backend endpoint.</li>
+        <li>Use the returned token in <code>/fetch</code> requests.</li>
+      </ol>
+      <p><a href="/">Back to app</a></p>
+    </div>
+  </div>
+</body>
+</html>
