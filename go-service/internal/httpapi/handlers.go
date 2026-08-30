@@ -37,6 +37,10 @@ func (h *Handlers) HowToGetAccessToken(w http.ResponseWriter, _ *http.Request) {
 	h.ui.ServeFile(w, "how_to_get_access_token.html", "text/html; charset=utf-8")
 }
 
+func (h *Handlers) EditorSessionTutorial(w http.ResponseWriter, _ *http.Request) {
+	h.ui.ServeFile(w, "editor_session_tutorial.html", "text/html; charset=utf-8")
+}
+
 func (h *Handlers) Edit(w http.ResponseWriter, _ *http.Request) {
 	h.ui.ServeFile(w, "edit.html", "text/html; charset=utf-8")
 }
