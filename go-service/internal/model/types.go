@@ -38,6 +38,43 @@ type StoreResponse struct {
 	SessionID string `json:"session_id"`
 }
 
+// EditorSessionRequest contains the document and conversion settings to preload
+// in an editor session.
+type EditorSessionRequest struct {
+	Markdown           string `json:"markdown"`
+	Template           string `json:"template"`
+	Author             string `json:"author"`
+	Date               string `json:"date"`
+	Title              string `json:"title"`
+	DocumentID         string `json:"documentId"`
+	FooterText         string `json:"footerText"`
+	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
+}
+
+type EditorSessionResponse struct {
+	SessionID string `json:"session_id"`
+	EditURL   string `json:"edit_url"`
+}
+
+type EditorSession struct {
+	Page     EditorSessionPage     `json:"page"`
+	Settings EditorSessionSettings `json:"settings"`
+}
+
+type EditorSessionPage struct {
+	Content    string `json:"content"`
+	Title      string `json:"title"`
+	AuthorName string `json:"authorName"`
+}
+
+type EditorSessionSettings struct {
+	Template           string `json:"template"`
+	Date               string `json:"date"`
+	DocumentID         string `json:"documentId"`
+	FooterText         string `json:"footerText"`
+	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
+}
+
 type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message,omitempty"`

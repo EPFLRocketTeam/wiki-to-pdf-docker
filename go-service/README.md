@@ -12,6 +12,7 @@ This folder contains the Go implementation of the wiki-to-pdf application.
   - `POST /convert`
   - `POST /generate-pdf`
   - `POST /store`
+  - `POST /editor-sessions`
   - `GET /serve-zip-project/{session_id}`
 - Request body limits and CORS middleware.
 - Structured JSON logging (`log/slog`).
@@ -60,6 +61,26 @@ go run ./cmd/server
 - `ASSETS_TEMPLATE_DIR` (default `/app/latex_templates/template_images`)
 - `ERT_WIKI_ROOT` (default `/app/ert_wiki`)
 - `LOG_LEVEL` (default `info`)
+
+## Open a prefilled editor session
+
+`POST /editor-sessions` accepts markdown and the conversion settings, stores
+them for 24 hours, and returns an `edit_url`. Open that URL in a browser tab to
+edit and compile the supplied document. The response contains no markdown, so
+large documents and their contents do not need to be placed in a URL.
+
+```json
+{
+  "markdown": "# Launch report",
+  "title": "Launch report",
+  "author": "Jane Doe",
+  "date": "2026-08-30",
+  "documentId": "RPT-42",
+  "template": "space-race",
+  "footerText": "Internal",
+  "lineNumbersEnabled": false
+}
+```
 
 ## Contract replay tests
 

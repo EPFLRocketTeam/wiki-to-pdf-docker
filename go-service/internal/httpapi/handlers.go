@@ -174,6 +174,46 @@ func (h *Handlers) Store(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, model.StoreResponse{SessionID: id})
 }
 
+func (h *Handlers) CreateEditorSession(w http.ResponseWriter, r *http.Request) {
+	var req model.EditorSessionRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+		return
+	}
+	if strings.TrimSpace(req.Markdown) == "" {
+		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "markdown is required"})
+		return
+	}
+
+	session := model.EditorSession{
+		Page: model.EditorSessionPage{
+			Content:    req.Markdown,
+			Title:      req.Title,
+			AuthorName: req.Author,
+		},
+		Settings: model.EditorSessionSettings{
+			Template:           req.Template,
+			Date:               req.Date,
+			DocumentID:         req.DocumentID,
+			FooterText:         req.FooterText,
+			LineNumbersEnabled: req.LineNumbersEnabled,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	id, err := h.store.PutJSON(ctx, session, 24*time.Hour)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: fmt.Sprintf("failed storing editor session: %v", err)})
+		return
+	}
+	writeJSON(w, http.StatusCreated, model.EditorSessionResponse{
+		SessionID: id,
+		EditURL:   "/edit?session_id=" + id,
+	})
+}
+
 func (h *Handlers) ServeZipProject(w http.ResponseWriter, r *http.Request) {
 	sessionID := strings.TrimSpace(r.PathValue("session_id"))
 	if sessionID == "" {

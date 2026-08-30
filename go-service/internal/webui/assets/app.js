@@ -328,6 +328,12 @@ async function mountEdit() {
       editors.setMarkdown(data.page.content || "");
       el("author").value = data.page.authorName || "";
       el("title").value = data.page.title || "";
+      const settings = data.settings || {};
+      el("date").value = settings.date || "";
+      el("documentId").value = settings.documentId || "";
+      el("template").value = settings.template || "space-race";
+      el("footerText").value = settings.footerText || "";
+      el("lineNumbersEnabled").checked = Boolean(settings.lineNumbersEnabled);
     }
   } catch (error) {
     appendOutput("Session load error: " + error);
@@ -346,9 +352,9 @@ async function mountEdit() {
         date: el("date").value || currentDateISO(),
         title: el("title").value,
         documentId: el("documentId").value,
-        footerText: "",
-        template: "space-race",
-        lineNumbersEnabled: false
+        footerText: el("footerText").value,
+        template: el("template").value || "space-race",
+        lineNumbersEnabled: el("lineNumbersEnabled").checked
       });
       const data = await response.json();
       if (!response.ok) {

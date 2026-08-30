@@ -1,0 +1,30 @@
+{
+  "name": "create and retrieve a prefilled editor session",
+  "steps": [
+    {
+      "name": "create editor session",
+      "method": "POST",
+      "path": "/editor-sessions",
+      "request": {
+        "markdown": "# Contract editor session",
+        "title": "Contract report",
+        "author": "Contract Author",
+        "date": "2026-08-30",
+        "documentId": "CONTRACT-5",
+        "template": "space-race",
+        "footerText": "Contract footer",
+        "lineNumbersEnabled": true
+      },
+      "compare": { "type": "json" },
+      "saveFields": {
+        "editorSessionID": "session_id"
+      }
+    },
+    {
+      "name": "retrieve editor session",
+      "method": "GET",
+      "path": "/api/sessions/{{var:editorSessionID}}",
+      "compare": { "type": "json" }
+    }
+  ]
+}

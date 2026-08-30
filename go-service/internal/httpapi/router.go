@@ -25,6 +25,7 @@ func NewRouter(cfg config.Config, h *Handlers) http.Handler {
 	mux.HandleFunc("POST /convert", h.Convert)
 	mux.HandleFunc("POST /generate-pdf", h.GeneratePDF)
 	mux.HandleFunc("POST /store", h.Store)
+	mux.HandleFunc("POST /editor-sessions", h.CreateEditorSession)
 	mux.HandleFunc("GET /serve-zip-project/{session_id}", h.ServeZipProject)
 
 	handler := recoverMiddleware(mux)
