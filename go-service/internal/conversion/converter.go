@@ -4,9 +4,11 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -219,7 +221,7 @@ func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir, au
 			continue
 		}
 
-		rel := strings.TrimPrefix(strings.TrimPrefix(src, "/"), "./")
+		rel := assetRelativePath(src, filepath.Base(src))
 		dst := filepath.Join(projectDir, rel)
 		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 			continue
@@ -254,10 +256,15 @@ func (c *Converter) downloadAsset(ctx context.Context, projectDir, rawURL, authT
 		return "", fmt.Errorf("bad status %d", resp.StatusCode)
 	}
 
-	cleanPath := strings.TrimPrefix(req.URL.Path, "/")
-	if cleanPath == "" {
-		cleanPath = "downloaded-asset"
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return "", err
 	}
+	filename := filepath.Base(parsedURL.Path)
+	if filename == "." || filename == "/" || filename == "" {
+		filename = "downloaded-asset"
+	}
+	cleanPath := assetRelativePath(rawURL, filename)
 
 	dst := filepath.Join(projectDir, cleanPath)
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
@@ -272,6 +279,13 @@ func (c *Converter) downloadAsset(ctx context.Context, projectDir, rawURL, authT
 		return "", err
 	}
 	return cleanPath, nil
+}
+
+func assetRelativePath(identity, filename string) string {
+	digest := fmt.Sprintf("%x", sha256.Sum256([]byte(identity)))[:16]
+	filename = strings.ReplaceAll(filename, "\\", "_")
+	filename = strings.ReplaceAll(filename, "/", "_")
+	return filepath.Join("assets", digest+"_"+filename)
 }
 
 func (c *Converter) resolveAssetPath(ref string) string {
