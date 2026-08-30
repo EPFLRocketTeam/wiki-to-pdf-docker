@@ -36,7 +36,7 @@ RUN for package in \
 	amsmath amssymb amsfonts booktabs adjustbox calc colortbl array etoolbox \
 	wrapfig ragged2e textcomp gensymb pdflscape pdfpages tikz geometry lastpage \
 	helvet soul datetime2 longtable fancyhdr fancyvrb eso-pic tcolorbox \
-	fontawesome5 lineno bookmark xurl; do \
+	lineno bookmark xurl; do \
 	kpsewhich "${package}.sty" >/dev/null || { echo "missing LaTeX package: ${package}"; exit 1; }; \
 	done
 
