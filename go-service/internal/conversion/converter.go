@@ -156,6 +156,9 @@ func (c *Converter) GeneratePDF(ctx context.Context, latexCode, assetsZipPath st
 	if err := os.WriteFile(texPath, []byte(latexCode), 0o644); err != nil {
 		return nil, err
 	}
+	if err := c.materializeTemplateAssetFallbacks(latexCode, workingDir); err != nil {
+		return nil, fmt.Errorf("prepare template assets: %w", err)
+	}
 
 	if err := addDraftToDocumentClass(texPath); err != nil {
 		return nil, err
@@ -213,7 +216,10 @@ func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir, au
 		}
 
 		if strings.HasPrefix(unescaped, `\assetsDirectory/`) {
-			unescaped = filepath.Join(c.cfg.AssetsTemplateDir, strings.TrimPrefix(unescaped, `\assetsDirectory/`))
+			// Bundled template images are always available in the runtime image.
+			// Keep this reference intact so PDF compilation does not depend on the
+			// conversion ZIP being available in a later request.
+			continue
 		}
 
 		src := c.resolveAssetPath(unescaped)
@@ -286,6 +292,32 @@ func assetRelativePath(identity, filename string) string {
 	filename = strings.ReplaceAll(filename, "\\", "_")
 	filename = strings.ReplaceAll(filename, "/", "_")
 	return filepath.Join("assets", digest+"_"+filename)
+}
+
+// materializeTemplateAssetFallbacks restores bundled template images by their
+// original filename when generated LaTeX is compiled without conversion assets.
+func (c *Converter) materializeTemplateAssetFallbacks(latexCode, workingDir string) error {
+	assetRef := regexp.MustCompile(`assets/[0-9a-f]{16}_([^{}\\/\s]+)`)
+	for _, match := range assetRef.FindAllStringSubmatch(latexCode, -1) {
+		if len(match) < 2 || filepath.Base(match[1]) != match[1] {
+			continue
+		}
+		src := filepath.Join(c.cfg.AssetsTemplateDir, match[1])
+		if !fileExists(src) {
+			continue
+		}
+		dst := filepath.Join(workingDir, filepath.FromSlash(match[0]))
+		if fileExists(dst) {
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			return err
+		}
+		if err := copyFile(src, dst); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Converter) resolveAssetPath(ref string) string {
