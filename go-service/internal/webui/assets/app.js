@@ -6,6 +6,9 @@ function queryParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
 
+const outputMessages = [];
+let outputEditor;
+
 async function postJSON(path, payload) {
   const response = await fetch(path, {
     method: "POST",
@@ -22,15 +25,22 @@ async function getJSON(path) {
 }
 
 function appendOutput(message) {
-  const output = el("output");
-  if (!output) return;
   const stamp = new Date().toISOString();
-  output.textContent = `[${stamp}] ${message}\n` + output.textContent;
+  outputMessages.unshift(`[${stamp}] ${message}`);
+  const output = outputMessages.join("\n");
+  if (outputEditor) {
+    outputEditor.setValue(output);
+    outputEditor.setScrollPosition({ scrollTop: 0 });
+    return;
+  }
+  const outputHost = el("outputEditor");
+  if (outputHost) outputHost.textContent = output;
 }
 
 async function initMonacoEditors() {
   const markdownHost = el("markdownEditor");
   const latexHost = el("latexEditor");
+  const outputHost = el("outputEditor");
 
   if (!markdownHost || !latexHost) {
     return {
@@ -73,6 +83,19 @@ async function initMonacoEditors() {
         wordWrap: "on",
         minimap: { enabled: false }
       });
+
+      if (outputHost) {
+        outputEditor = monaco.editor.create(outputHost, {
+          value: outputMessages.join("\n"),
+          language: "plaintext",
+          theme: "vs",
+          automaticLayout: true,
+          readOnly: true,
+          wordWrap: "on",
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false
+        });
+      }
 
       resolve({
         getMarkdown: () => markdownEditor.getValue(),
