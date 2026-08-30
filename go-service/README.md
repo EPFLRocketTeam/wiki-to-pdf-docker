@@ -90,6 +90,9 @@ Both values are stored in a private Redis record for the session lifetime and
 are never returned by the editor-session API, included in the edit URL, or
 written to the generated LaTex project.
 
+`imageAuthToken` requires `imageBaseUrl`. Use the Wiki.js site origin as the
+base URL (for example, `https://wiki.example.ch`), not its GraphQL endpoint.
+
 ## Contract replay tests
 
 From this folder:

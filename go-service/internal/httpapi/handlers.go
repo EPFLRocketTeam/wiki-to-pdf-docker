@@ -202,6 +202,10 @@ func (h *Handlers) CreateEditorSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "markdown is required"})
 		return
 	}
+	if strings.TrimSpace(req.ImageAuthToken) != "" && strings.TrimSpace(req.ImageBaseURL) == "" {
+		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "imageBaseUrl is required when imageAuthToken is provided"})
+		return
+	}
 
 	session := model.EditorSession{
 		Page: model.EditorSessionPage{

@@ -121,6 +121,9 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 	}
 
 	mapping := c.collectAssets(ctx, safeLatex, projectDir, req.ImageAuthToken)
+	if err := c.validateWikiImageAssets(safeLatex, mapping); err != nil {
+		return ConvertResult{}, err
+	}
 	if err := rewriteAssetReferences(mainTexPath, mapping); err != nil {
 		return ConvertResult{}, err
 	}
@@ -292,6 +295,20 @@ func assetRelativePath(identity, filename string) string {
 	filename = strings.ReplaceAll(filename, "\\", "_")
 	filename = strings.ReplaceAll(filename, "/", "_")
 	return filepath.Join("assets", digest+"_"+filename)
+}
+
+func (c *Converter) validateWikiImageAssets(latexText string, mapping map[string]string) error {
+	imgRe := regexp.MustCompile(`\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}`)
+	for _, match := range imgRe.FindAllStringSubmatch(latexText, -1) {
+		if len(match) < 2 {
+			continue
+		}
+		ref := strings.TrimSpace(match[1])
+		if strings.HasPrefix(ref, "/app/ert_wiki/") && mapping[ref] == "" {
+			return fmt.Errorf("Wiki.js image %q is unavailable locally; create the editor session with imageBaseUrl and, for protected images, imageAuthToken", ref)
+		}
+	}
+	return nil
 }
 
 // materializeTemplateAssetFallbacks restores bundled template images by their
