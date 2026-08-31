@@ -6,7 +6,7 @@ ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo "Starting Redis in Docker..."
-docker compose up -d redis
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d redis
 
 echo "Starting Go backend locally on :8000..."
 (

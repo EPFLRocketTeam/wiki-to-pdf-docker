@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.go
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
       - LISTEN_ADDR=:8000
       - REDIS_ADDR=redis-wiki-to-pdf:6379
@@ -34,8 +34,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
     networks:

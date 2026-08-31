@@ -6,7 +6,7 @@ ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo "Starting Go-only stack (web-go + redis)..."
-docker compose up -d --build web-go redis
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build web-go redis
 
 echo "Waiting for Go service health endpoint..."
 for i in $(seq 1 30); do

@@ -1,0 +1,9 @@
+# Local-only host port bindings. Dokploy deploys docker-compose.yml without this file.
+services:
+  web-go:
+    ports:
+      - "8000:8000"
+
+  redis:
+    ports:
+      - "6379:6379"
