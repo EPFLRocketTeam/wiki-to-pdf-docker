@@ -50,4 +50,7 @@ ENV LISTEN_ADDR=:8000
 
 EXPOSE 8000
 
+HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=6 \
+	CMD curl --fail --silent http://127.0.0.1:8000/healthz || exit 1
+
 ENTRYPOINT ["/app/wiki-to-pdf-go"]
