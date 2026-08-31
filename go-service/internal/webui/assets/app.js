@@ -147,6 +147,11 @@ function renderSessionImages(paths, sessionID) {
     imageLink.target = "_blank";
     imageLink.rel = "noopener";
     imageLink.title = `Open ${imagePath}`;
+    imageLink.addEventListener("click", (event) => {
+      if (openImagePreview(imagePath, imageLink.href)) {
+        event.preventDefault();
+      }
+    });
     const thumbnail = document.createElement("img");
     thumbnail.className = "thumbnail";
     thumbnail.src = imageLink.href;
@@ -164,6 +169,34 @@ function renderSessionImages(paths, sessionID) {
   }
   summary.hidden = imagePaths.length === 0;
   empty.hidden = imagePaths.length !== 0;
+}
+
+function openImagePreview(path, imageURL) {
+  const dialog = el("imagePreviewDialog");
+  const image = el("imagePreview");
+  const title = el("imagePreviewTitle");
+  if (!dialog || !image || !title || typeof dialog.showModal !== "function") {
+    return false;
+  }
+  title.textContent = path;
+  image.src = imageURL;
+  image.alt = path;
+  dialog.showModal();
+  return true;
+}
+
+function initImagePreviewDialog() {
+  const dialog = el("imagePreviewDialog");
+  const close = el("imagePreviewClose");
+  if (!dialog || !close) return;
+  close.addEventListener("click", () => dialog.close());
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+  dialog.addEventListener("close", () => {
+    const image = el("imagePreview");
+    if (image) image.removeAttribute("src");
+  });
 }
 
 async function mountIndex() {
@@ -370,6 +403,8 @@ async function mountEdit() {
   if (!convertBtn || !compileBtn || !overleafBtn || !meta || !queryParam("session_id")) {
     return;
   }
+
+  initImagePreviewDialog();
 
   const editors = await initMonacoEditors();
   let lastLatex = "";

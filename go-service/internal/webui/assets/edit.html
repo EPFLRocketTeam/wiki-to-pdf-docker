@@ -47,6 +47,13 @@
     .image-summary .name { font-weight: 700; font-size: .9rem; overflow-wrap: anywhere; }
     .image-summary .path { margin-left: auto; color: #607078; font-size: .8rem; overflow-wrap: anywhere; text-align: right; }
     .image-empty { margin: 0; color: #53626b; font-size: .9rem; }
+    dialog.image-preview { width: min(92vw, 1000px); max-height: 92vh; padding: 0; border: 0; border-radius: 12px; background: var(--card); box-shadow: 0 24px 70px rgba(0, 0, 0, .4); }
+    dialog.image-preview::backdrop { background: rgba(23, 34, 42, .66); }
+    .image-preview-header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--edge); }
+    .image-preview-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: var(--brand2); }
+    .image-preview-close { margin-left: auto; padding: 5px 9px; background: white; color: var(--brand2); border-color: #94aab5; }
+    .image-preview-body { display: grid; place-items: center; min-height: 200px; padding: 14px; background: #f7f3ea; }
+    .image-preview-body img { display: block; max-width: 100%; max-height: calc(92vh - 80px); object-fit: contain; }
   </style>
 </head>
 <body>
@@ -136,6 +143,15 @@
       </div>
     </div>
   </div>
+  <dialog class="image-preview" id="imagePreviewDialog">
+    <div class="image-preview-header">
+      <span class="image-preview-title" id="imagePreviewTitle"></span>
+      <button class="image-preview-close" id="imagePreviewClose" type="button">Close</button>
+    </div>
+    <div class="image-preview-body">
+      <img id="imagePreview" alt="" />
+    </div>
+  </dialog>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs/loader.min.js"></script>
   <script src="/ui/app.js"></script>
 </body>
