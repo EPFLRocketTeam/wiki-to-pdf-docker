@@ -32,9 +32,9 @@
 \IfFileExists{phvr8t.tfm}{\usepackage[scaled]{helvet}}{}
 \IfFileExists{soul.sty}{%
     \usepackage{soul}%
-    \providecommand{\sout}[1]{\st{#1}}%
+    \providecommand{\sout}[1]{\st{##1}}%
 }{%
-    \providecommand{\sout}[1]{#1}%
+    \providecommand{\sout}[1]{##1}%
 }
 \IfFileExists{datetime2.sty}{\usepackage[useregional]{datetime2}}{}
 \usepackage{longtable}
