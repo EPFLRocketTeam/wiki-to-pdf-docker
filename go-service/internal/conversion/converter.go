@@ -209,7 +209,7 @@ func (c *Converter) GeneratePDF(ctx context.Context, latexCode string, assetsZip
 }
 
 func runLuaLatex(ctx context.Context, binary, texPath, outputDir string) error {
-	cmd := exec.CommandContext(ctx, binary, "-shell-escape", "-output-directory", outputDir, texPath)
+	cmd := exec.CommandContext(ctx, binary, "-interaction=nonstopmode", "-halt-on-error", "-shell-escape", "-output-directory", outputDir, texPath)
 	cmd.Dir = outputDir
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
