@@ -20,6 +20,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    networks:
+      - default
+      - nginx-proxy
     volumes:
       - ./ert_wiki:/app/ert_wiki
       - ./app/latex_templates:/app/latex_templates:ro
@@ -42,6 +45,9 @@ services:
       - default
 
 networks:
+  nginx-proxy:
+    external: true
+    name: nginx-proxy-manager_default
   default:
     driver: bridge
 
