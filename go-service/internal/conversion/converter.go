@@ -35,6 +35,8 @@ type ConvertResult struct {
 	ZipPath   string
 }
 
+const bundledBaseTemplatePath = "/app/latex_templates/base.tex"
+
 func NewConverter(cfg config.Config) *Converter {
 	return &Converter{
 		cfg:        cfg,
@@ -89,7 +91,7 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 		"--to", "latex",
 		"--lua-filter", c.cfg.LuaFilterPath,
 		"--variable", "code-block-environment=verbatim",
-		"--template", c.cfg.BaseTemplatePath,
+		"--template", c.baseTemplatePath(),
 		"--metadata-file", metaPath,
 		mdPath,
 	}
@@ -147,6 +149,20 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 	}
 
 	return ConvertResult{Latex: string(packagedLatex), SessionID: sessionID, ZipPath: zipPath}, nil
+}
+
+// baseTemplatePath tolerates a legacy deployment override such as
+// BASE_TEMPLATE_PATH=base.tex. Pandoc interprets that value as the name of an
+// internal template, while the container bundles the actual template at the
+// absolute path below.
+func (c *Converter) baseTemplatePath() string {
+	if fileExists(c.cfg.BaseTemplatePath) {
+		return c.cfg.BaseTemplatePath
+	}
+	if fileExists(bundledBaseTemplatePath) {
+		return bundledBaseTemplatePath
+	}
+	return c.cfg.BaseTemplatePath
 }
 
 func (c *Converter) GeneratePDF(ctx context.Context, latexCode string, assetsZipData []byte) ([]byte, error) {
