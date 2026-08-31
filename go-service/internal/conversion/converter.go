@@ -179,6 +179,7 @@ func (c *Converter) GeneratePDF(ctx context.Context, latexCode string, assetsZip
 
 	texPath := filepath.Join(workingDir, "document.tex")
 	pdfPath := filepath.Join(workingDir, "document.pdf")
+	latexCode = repairLegacyTemplateMacros(latexCode)
 
 	if err := os.WriteFile(texPath, []byte(latexCode), 0o644); err != nil {
 		return nil, err
@@ -678,6 +679,17 @@ func removeEmojis(text string) string {
 		lines[i] = trail.ReplaceAllString(lines[i], "")
 	}
 	return strings.Join(lines, "\n")
+}
+
+// repairLegacyTemplateMacros keeps LaTeX created before the strikeout-template
+// correction compilable. The editor deliberately allows a user to edit and
+// later compile its LaTeX output, so a deployment cannot otherwise repair a
+// document that was converted before the corrected template was installed.
+func repairLegacyTemplateMacros(latexCode string) string {
+	return strings.NewReplacer(
+		`\providecommand{\sout}[1]{\st{##1}}`, `\providecommand{\sout}[1]{\st{#1}}`,
+		`\providecommand{\sout}[1]{##1}`, `\providecommand{\sout}[1]{#1}`,
+	).Replace(latexCode)
 }
 
 func addDraftToDocumentClass(texPath string) error {
