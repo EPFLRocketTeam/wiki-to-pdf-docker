@@ -17,6 +17,9 @@ services:
       - ERT_WIKI_ROOT=/app/ert_wiki
       - LOG_LEVEL=info
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
     volumes:
       - ./ert_wiki:/app/ert_wiki
       - ./app/latex_templates:/app/latex_templates:ro
@@ -26,6 +29,11 @@ services:
     image: "redis:7-alpine"
     container_name: redis-wiki-to-pdf
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     ports:
       - "6379:6379"
     volumes:

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"net/http"
 	"time"
 
@@ -25,12 +24,6 @@ func New(cfg config.Config) (*App, error) {
 		Addr: cfg.RedisAddr,
 		DB:   cfg.RedisDB,
 	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	if err := rdb.Ping(ctx).Err(); err != nil {
-		return nil, err
-	}
 
 	sessionStore := store.NewRedisStore(rdb)
 	wikiClient := wiki.NewClient(20 * time.Second)
