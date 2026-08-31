@@ -297,9 +297,23 @@ func (h *Handlers) SessionByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(raw)
+	var session model.EditorSession
+	if err := json.Unmarshal(raw, &session); err != nil {
+		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: "invalid editor session"})
+		return
+	}
+	if imageRaw, err := h.store.GetEditorImageSource(ctx, sessionID); err == nil {
+		var imageSource model.ImageSource
+		if err := json.Unmarshal(imageRaw, &imageSource); err != nil {
+			writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: "invalid private image source"})
+			return
+		}
+		if strings.TrimSpace(session.Settings.ImageBaseURL) == "" {
+			session.Settings.ImageBaseURL = imageSource.BaseURL
+		}
+		session.Settings.ImageTokenSaved = strings.TrimSpace(imageSource.AuthToken) != ""
+	}
+	writeJSON(w, http.StatusOK, session)
 }
 
 func (h *Handlers) applyEditorImageSource(ctx context.Context, req *model.ConvertRequest) error {
