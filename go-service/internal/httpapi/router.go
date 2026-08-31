@@ -18,6 +18,7 @@ func NewRouter(cfg config.Config, h *Handlers) http.Handler {
 	mux.HandleFunc("GET /editor-session-tutorial", h.EditorSessionTutorial)
 	mux.HandleFunc("GET /edit", h.Edit)
 	mux.HandleFunc("GET /api/sessions/{session_id}", h.SessionByID)
+	mux.HandleFunc("GET /api/sessions/{session_id}/images", h.SessionImage)
 	mux.Handle("GET /ui/", http.StripPrefix("/ui/", h.ui.StaticHandler()))
 	mux.HandleFunc("GET /healthz", h.Healthz)
 	mux.HandleFunc("GET /readyz", h.Readyz)

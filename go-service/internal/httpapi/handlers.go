@@ -327,6 +327,40 @@ func (h *Handlers) SessionByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, session)
 }
 
+// SessionImage serves one image kept in the private image record for an
+// editor session. The image data is never included in the session JSON.
+func (h *Handlers) SessionImage(w http.ResponseWriter, r *http.Request) {
+	sessionID := strings.TrimSpace(r.PathValue("session_id"))
+	imagePath := strings.TrimSpace(r.URL.Query().Get("path"))
+	if sessionID == "" || imagePath == "" {
+		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "session_id and image path are required"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	raw, err := h.store.GetEditorImageSource(ctx, sessionID)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, model.ErrorResponse{Error: "session image not found"})
+		return
+	}
+
+	var source model.ImageSource
+	if err := json.Unmarshal(raw, &source); err != nil {
+		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: "invalid private image source"})
+		return
+	}
+	for _, image := range source.Images {
+		if image.Path == imagePath {
+			w.Header().Set("Content-Type", http.DetectContentType(image.Content))
+			w.Header().Set("Cache-Control", "private, max-age=300")
+			_, _ = w.Write(image.Content)
+			return
+		}
+	}
+	writeJSON(w, http.StatusNotFound, model.ErrorResponse{Error: "session image not found"})
+}
+
 func (h *Handlers) applyEditorImageSource(ctx context.Context, req *model.ConvertRequest) error {
 	if req.EditorSessionID != "" {
 		raw, err := h.store.GetEditorImageSource(ctx, req.EditorSessionID)

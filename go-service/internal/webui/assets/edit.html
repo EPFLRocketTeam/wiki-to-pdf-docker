@@ -28,7 +28,7 @@
     .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     @media (max-width: 960px) { .row { grid-template-columns: 1fr; } }
     label { display: block; font-size: .86rem; color: #42525d; margin-bottom: 4px; }
-    input { width: 100%; margin: 0; padding: 9px 10px; border: 1px solid #cfc7bb; border-radius: 8px; }
+    input, select { width: 100%; margin: 0; padding: 9px 10px; border: 1px solid #cfc7bb; border-radius: 8px; background: #fffefc; font: inherit; }
     .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
     button { border: 1px solid #9f2f2f; background: var(--brand); color: white; border-radius: 8px; padding: 9px 12px; cursor: pointer; font-weight: 700; }
     button.secondary { background: white; color: var(--brand2); border-color: #94aab5; }
@@ -41,9 +41,9 @@
     iframe { width: 100%; height: 530px; border: 0; border-radius: 10px; background: #fff; }
     h1, h2 { margin: 0 0 10px; color: var(--brand2); }
     .image-summary { margin: 0; padding: 0; list-style: none; max-height: 172px; overflow: auto; border: 1px solid #e5dccf; border-radius: 9px; }
-    .image-summary li { display: flex; gap: 9px; align-items: baseline; padding: 8px 10px; border-bottom: 1px solid #eee7dc; }
+    .image-summary li { display: flex; gap: 9px; align-items: center; padding: 7px 10px; border-bottom: 1px solid #eee7dc; }
     .image-summary li:last-child { border-bottom: 0; }
-    .image-summary .icon { color: var(--brand); font-size: .9rem; }
+    .image-summary .thumbnail { width: 32px; height: 32px; object-fit: contain; border: 1px solid #e5dccf; border-radius: 5px; background: #fff; flex: 0 0 auto; }
     .image-summary .name { font-weight: 700; font-size: .9rem; overflow-wrap: anywhere; }
     .image-summary .path { margin-left: auto; color: #607078; font-size: .8rem; overflow-wrap: anywhere; text-align: right; }
     .image-empty { margin: 0; color: #53626b; font-size: .9rem; }
@@ -78,7 +78,14 @@
           </div>
           <div>
             <label for="template">Template</label>
-            <input id="template" value="space-race" placeholder="space-race" />
+            <select id="template">
+              <option value="space-race">space-race</option>
+              <option value="competition">competition</option>
+              <option value="icarus">icarus</option>
+              <option value="hyperion">hyperion</option>
+              <option value="management">management</option>
+              <option value="generic">generic</option>
+            </select>
           </div>
           <div>
             <label for="footerText">Footer text</label>

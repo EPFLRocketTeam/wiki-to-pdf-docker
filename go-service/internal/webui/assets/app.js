@@ -131,7 +131,7 @@ function buildOverleafURL(sessionID, title) {
   return `https://www.overleaf.com/docs?snip_uri[]=${encodedZip}&main_document=${encodedMain}&title=${encodedTitle}`;
 }
 
-function renderSessionImages(paths) {
+function renderSessionImages(paths, sessionID) {
   const summary = el("imageSummary");
   const empty = el("imageEmpty");
   const count = el("imageCount");
@@ -142,9 +142,16 @@ function renderSessionImages(paths) {
   summary.replaceChildren();
   for (const imagePath of imagePaths) {
     const item = document.createElement("li");
-    const icon = document.createElement("span");
-    icon.className = "icon";
-    icon.textContent = "▣";
+    const imageLink = document.createElement("a");
+    imageLink.href = `/api/sessions/${encodeURIComponent(sessionID)}/images?path=${encodeURIComponent(imagePath)}`;
+    imageLink.target = "_blank";
+    imageLink.rel = "noopener";
+    imageLink.title = `Open ${imagePath}`;
+    const thumbnail = document.createElement("img");
+    thumbnail.className = "thumbnail";
+    thumbnail.src = imageLink.href;
+    thumbnail.alt = "";
+    imageLink.appendChild(thumbnail);
     const name = document.createElement("span");
     name.className = "name";
     const parts = imagePath.split("/").filter(Boolean);
@@ -152,7 +159,7 @@ function renderSessionImages(paths) {
     const path = document.createElement("span");
     path.className = "path";
     path.textContent = imagePath;
-    item.append(icon, name, path);
+    item.append(imageLink, name, path);
     summary.appendChild(item);
   }
   summary.hidden = imagePaths.length === 0;
@@ -386,7 +393,7 @@ async function mountEdit() {
       el("template").value = settings.template || "space-race";
       el("footerText").value = settings.footerText || "";
       el("lineNumbersEnabled").checked = Boolean(settings.lineNumbersEnabled);
-      renderSessionImages(settings.imagePaths);
+      renderSessionImages(settings.imagePaths, sessionID);
     }
   } catch (error) {
     appendOutput("Session load error: " + error);
