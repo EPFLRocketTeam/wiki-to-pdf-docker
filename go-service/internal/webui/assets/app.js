@@ -131,6 +131,34 @@ function buildOverleafURL(sessionID, title) {
   return `https://www.overleaf.com/docs?snip_uri[]=${encodedZip}&main_document=${encodedMain}&title=${encodedTitle}`;
 }
 
+function renderSessionImages(paths) {
+  const summary = el("imageSummary");
+  const empty = el("imageEmpty");
+  const count = el("imageCount");
+  if (!summary || !empty || !count) return;
+
+  const imagePaths = Array.isArray(paths) ? paths.filter((path) => typeof path === "string" && path.trim()) : [];
+  count.textContent = imagePaths.length === 1 ? "1 image" : `${imagePaths.length} images`;
+  summary.replaceChildren();
+  for (const imagePath of imagePaths) {
+    const item = document.createElement("li");
+    const icon = document.createElement("span");
+    icon.className = "icon";
+    icon.textContent = "▣";
+    const name = document.createElement("span");
+    name.className = "name";
+    const parts = imagePath.split("/").filter(Boolean);
+    name.textContent = parts.at(-1) || imagePath;
+    const path = document.createElement("span");
+    path.className = "path";
+    path.textContent = imagePath;
+    item.append(icon, name, path);
+    summary.appendChild(item);
+  }
+  summary.hidden = imagePaths.length === 0;
+  empty.hidden = imagePaths.length !== 0;
+}
+
 async function mountIndex() {
   const convertBtn = el("convertBtn");
   const compileBtn = el("compileBtn");
@@ -358,11 +386,7 @@ async function mountEdit() {
       el("template").value = settings.template || "space-race";
       el("footerText").value = settings.footerText || "";
       el("lineNumbersEnabled").checked = Boolean(settings.lineNumbersEnabled);
-      el("imageBaseUrl").value = settings.imageBaseUrl || "";
-      const imageAccessStatus = el("imageAccessStatus");
-      if (settings.imageTokenSaved && imageAccessStatus) {
-        imageAccessStatus.textContent = "A private token is already saved for this session. Leave the token field empty to use it.";
-      }
+      renderSessionImages(settings.imagePaths);
     }
   } catch (error) {
     appendOutput("Session load error: " + error);
@@ -384,9 +408,7 @@ async function mountEdit() {
         documentId: el("documentId").value,
         footerText: el("footerText").value,
         template: el("template").value || "space-race",
-        lineNumbersEnabled: el("lineNumbersEnabled").checked,
-        imageBaseUrl: el("imageBaseUrl").value.trim(),
-        imageAuthToken: el("imageAuthToken").value
+        lineNumbersEnabled: el("lineNumbersEnabled").checked
       });
       const data = await response.json();
       if (!response.ok) {

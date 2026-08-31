@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	pathpkg "path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -120,7 +121,14 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 		return ConvertResult{}, err
 	}
 
-	mapping := c.collectAssets(ctx, safeLatex, projectDir, req.ImageAuthToken)
+	mapping, err := c.packageProvidedImages(safeLatex, projectDir, req.ImageBaseURL, req.Images)
+	if err != nil {
+		return ConvertResult{}, err
+	}
+	mapping, err = c.collectAssets(ctx, safeLatex, projectDir, req.ImageAuthToken, mapping)
+	if err != nil {
+		return ConvertResult{}, err
+	}
 	if err := c.validateWikiImageAssets(safeLatex, mapping); err != nil {
 		return ConvertResult{}, err
 	}
@@ -196,12 +204,14 @@ func runLuaLatex(ctx context.Context, binary, texPath, outputDir string) error {
 	return nil
 }
 
-func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir, authToken string) map[string]string {
+func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir, authToken string, mapping map[string]string) (map[string]string, error) {
 	imgRe := regexp.MustCompile(`\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}`)
 	inputRe := regexp.MustCompile(`\\(?:input|include)\{([^}]+)\}`)
 	allRefs := append(imgRe.FindAllStringSubmatch(latexText, -1), inputRe.FindAllStringSubmatch(latexText, -1)...)
 
-	mapping := map[string]string{}
+	if mapping == nil {
+		mapping = map[string]string{}
+	}
 	for _, match := range allRefs {
 		if len(match) < 2 {
 			continue
@@ -210,12 +220,17 @@ func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir, au
 		if orig == "" {
 			continue
 		}
+		if mapping[orig] != "" {
+			continue
+		}
 		unescaped := strings.ReplaceAll(orig, `\ `, " ")
 
 		if strings.HasPrefix(unescaped, "http://") || strings.HasPrefix(unescaped, "https://") {
-			if rel, err := c.downloadAsset(ctx, projectDir, unescaped, authToken); err == nil {
-				mapping[orig] = rel
+			rel, err := c.downloadAsset(ctx, projectDir, unescaped, authToken)
+			if err != nil {
+				return nil, fmt.Errorf("download image %q: %w", unescaped, err)
 			}
+			mapping[orig] = rel
 			continue
 		}
 
@@ -242,7 +257,104 @@ func (c *Converter) collectAssets(ctx context.Context, latexText, projectDir, au
 		mapping[orig] = rel
 	}
 
-	return mapping
+	return mapping, nil
+}
+
+// packageProvidedImages writes images sent in the conversion request into the
+// project and maps the corresponding generated LaTeX references to them. This
+// lets callers supply protected Wiki.js images directly, without the service
+// having to authenticate to or download from their wiki.
+func (c *Converter) packageProvidedImages(latexText, projectDir, imageBaseURL string, images []model.ImageAsset) (map[string]string, error) {
+	provided := make(map[string]model.ImageAsset, len(images))
+	for _, image := range images {
+		key, err := canonicalImagePath(image.Path)
+		if err != nil {
+			return nil, fmt.Errorf("invalid supplied image path %q: %w", image.Path, err)
+		}
+		if _, exists := provided[key]; exists {
+			return nil, fmt.Errorf("duplicate supplied image path %q", image.Path)
+		}
+		provided[key] = image
+	}
+
+	mapping := map[string]string{}
+	imgRe := regexp.MustCompile(`\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}`)
+	for _, match := range imgRe.FindAllStringSubmatch(latexText, -1) {
+		if len(match) < 2 {
+			continue
+		}
+		orig := strings.TrimSpace(match[1])
+		image, ok := providedImageForReference(provided, orig, imageBaseURL)
+		if !ok {
+			continue
+		}
+
+		key, _ := canonicalImagePath(image.Path)
+		rel := assetRelativePath("provided:"+key, filepath.Base(key))
+		dst := filepath.Join(projectDir, rel)
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			return nil, err
+		}
+		if err := os.WriteFile(dst, image.Content, 0o644); err != nil {
+			return nil, err
+		}
+		mapping[orig] = rel
+	}
+	return mapping, nil
+}
+
+func providedImageForReference(provided map[string]model.ImageAsset, reference, imageBaseURL string) (model.ImageAsset, bool) {
+	for _, candidate := range imageReferenceCandidates(reference, imageBaseURL) {
+		if image, ok := provided[candidate]; ok {
+			return image, true
+		}
+	}
+	return model.ImageAsset{}, false
+}
+
+func imageReferenceCandidates(reference, imageBaseURL string) []string {
+	reference = strings.ReplaceAll(strings.TrimSpace(reference), `\ `, " ")
+	candidates := []string{reference}
+	if strings.HasPrefix(reference, "/app/ert_wiki/") {
+		candidates = append(candidates, strings.TrimPrefix(reference, "/app/ert_wiki/"))
+	}
+	if parsed, err := url.Parse(reference); err == nil && parsed.IsAbs() {
+		candidates = append(candidates, parsed.Path)
+	}
+	if base, err := url.Parse(imageBaseURL); err == nil && base.IsAbs() {
+		if parsed, err := url.Parse(reference); err == nil && parsed.IsAbs() && parsed.Scheme == base.Scheme && parsed.Host == base.Host {
+			candidates = append(candidates, strings.TrimPrefix(parsed.Path, base.Path))
+		}
+	}
+
+	keys := make([]string, 0, len(candidates))
+	for _, candidate := range candidates {
+		if key, err := canonicalImagePath(candidate); err == nil {
+			keys = append(keys, key)
+		}
+	}
+	return keys
+}
+
+func canonicalImagePath(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", fmt.Errorf("path is empty")
+	}
+	if parsed, err := url.Parse(raw); err == nil && parsed.IsAbs() {
+		raw = parsed.Path
+	}
+	raw = strings.TrimPrefix(strings.ReplaceAll(raw, "\\", "/"), "/")
+	for _, segment := range strings.Split(raw, "/") {
+		if segment == ".." {
+			return "", fmt.Errorf("path traversal is not allowed")
+		}
+	}
+	clean := pathpkg.Clean(raw)
+	if clean == "." || clean == "" {
+		return "", fmt.Errorf("path is empty")
+	}
+	return clean, nil
 }
 
 func (c *Converter) downloadAsset(ctx context.Context, projectDir, rawURL, authToken string) (string, error) {
@@ -309,7 +421,7 @@ func (c *Converter) validateWikiImageAssets(latexText string, mapping map[string
 			continue
 		}
 		if strings.HasPrefix(ref, "/app/ert_wiki/") {
-			return fmt.Errorf("Wiki.js image %q is unavailable locally; create the editor session with imageBaseUrl and, for protected images, imageAuthToken", ref)
+			return fmt.Errorf("Wiki.js image %q is unavailable locally; include it in the convert request images array", ref)
 		}
 		if filepath.IsAbs(ref) {
 			return fmt.Errorf("generated image %q could not be packaged; check the diagram source and required conversion tool", ref)

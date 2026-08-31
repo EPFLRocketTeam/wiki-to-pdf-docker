@@ -3,7 +3,13 @@
   "method": "POST",
   "path": "/convert",
   "request": {
-    "markdown": "# Test Document\n\nThis is a **contract test** payload.\n\n## table section\n| key | value |\n|---|---|\n| mission | phoenix |",
+    "markdown": "# Test Document\n\nThis is a **contract test** payload.\n\n![tiny image](/contract-tiny.png)\n\n## table section\n| key | value |\n|---|---|\n| mission | phoenix |",
+    "images": [
+      {
+        "path": "/contract-tiny.png",
+        "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL5xQAAAABJRU5ErkJggg=="
+      }
+    ],
     "template": "space-race",
     "author": "Contract Tester",
     "date": "2026-08-25",

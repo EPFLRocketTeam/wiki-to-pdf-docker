@@ -40,6 +40,13 @@
     .output-editor { height: 180px; }
     iframe { width: 100%; height: 530px; border: 0; border-radius: 10px; background: #fff; }
     h1, h2 { margin: 0 0 10px; color: var(--brand2); }
+    .image-summary { margin: 0; padding: 0; list-style: none; max-height: 172px; overflow: auto; border: 1px solid #e5dccf; border-radius: 9px; }
+    .image-summary li { display: flex; gap: 9px; align-items: baseline; padding: 8px 10px; border-bottom: 1px solid #eee7dc; }
+    .image-summary li:last-child { border-bottom: 0; }
+    .image-summary .icon { color: var(--brand); font-size: .9rem; }
+    .image-summary .name { font-weight: 700; font-size: .9rem; overflow-wrap: anywhere; }
+    .image-summary .path { margin-left: auto; color: #607078; font-size: .8rem; overflow-wrap: anywhere; text-align: right; }
+    .image-empty { margin: 0; color: #53626b; font-size: .9rem; }
   </style>
 </head>
 <body>
@@ -85,19 +92,9 @@
       </div>
 
       <div class="card stack">
-        <h2>Wiki.js image access <small>(optional)</small></h2>
-        <p>Use these when Markdown contains relative Wiki.js image paths. The access token is used only for this conversion and is never returned by the session API.</p>
-        <div class="row">
-          <div>
-            <label for="imageBaseUrl">Wiki.js base URL</label>
-            <input id="imageBaseUrl" type="url" placeholder="https://wiki.example.ch" />
-          </div>
-          <div>
-            <label for="imageAuthToken">Wiki.js access token</label>
-            <input id="imageAuthToken" type="password" autocomplete="off" placeholder="Optional Bearer token" />
-          </div>
-        </div>
-        <div id="imageAccessStatus"></div>
+        <h2>Session images <small id="imageCount"></small></h2>
+        <p class="image-empty" id="imageEmpty">No images were supplied with this session.</p>
+        <ul class="image-summary" id="imageSummary" hidden></ul>
       </div>
 
       <div class="card stack">

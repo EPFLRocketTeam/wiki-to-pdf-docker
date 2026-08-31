@@ -13,17 +13,26 @@ type GetAccessTokenRequest struct {
 }
 
 type ConvertRequest struct {
-	Markdown           string `json:"markdown"`
-	EditorSessionID    string `json:"editor_session_id,omitempty"`
-	Template           string `json:"template"`
-	Author             string `json:"author"`
-	Date               string `json:"date"`
-	Title              string `json:"title"`
-	DocumentID         string `json:"documentId"`
-	FooterText         string `json:"footerText"`
-	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
-	ImageBaseURL       string `json:"imageBaseUrl,omitempty"`
-	ImageAuthToken     string `json:"imageAuthToken,omitempty"`
+	Markdown           string       `json:"markdown"`
+	EditorSessionID    string       `json:"editor_session_id,omitempty"`
+	Images             []ImageAsset `json:"images,omitempty"`
+	Template           string       `json:"template"`
+	Author             string       `json:"author"`
+	Date               string       `json:"date"`
+	Title              string       `json:"title"`
+	DocumentID         string       `json:"documentId"`
+	FooterText         string       `json:"footerText"`
+	LineNumbersEnabled bool         `json:"lineNumbersEnabled"`
+	ImageBaseURL       string       `json:"imageBaseUrl,omitempty"`
+	ImageAuthToken     string       `json:"imageAuthToken,omitempty"`
+}
+
+// ImageAsset is an image supplied by the request caller. Content uses Go's
+// standard JSON representation for []byte: a base64-encoded string.
+// Path must be the image source path used in the Markdown.
+type ImageAsset struct {
+	Path    string `json:"path"`
+	Content []byte `json:"content"`
 }
 
 type ConvertResponse struct {
@@ -45,16 +54,17 @@ type StoreResponse struct {
 // EditorSessionRequest contains the document and conversion settings to preload
 // in an editor session.
 type EditorSessionRequest struct {
-	Markdown           string `json:"markdown"`
-	Template           string `json:"template"`
-	Author             string `json:"author"`
-	Date               string `json:"date"`
-	Title              string `json:"title"`
-	DocumentID         string `json:"documentId"`
-	FooterText         string `json:"footerText"`
-	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
-	ImageBaseURL       string `json:"imageBaseUrl,omitempty"`
-	ImageAuthToken     string `json:"imageAuthToken,omitempty"`
+	Markdown           string       `json:"markdown"`
+	Images             []ImageAsset `json:"images,omitempty"`
+	Template           string       `json:"template"`
+	Author             string       `json:"author"`
+	Date               string       `json:"date"`
+	Title              string       `json:"title"`
+	DocumentID         string       `json:"documentId"`
+	FooterText         string       `json:"footerText"`
+	LineNumbersEnabled bool         `json:"lineNumbersEnabled"`
+	ImageBaseURL       string       `json:"imageBaseUrl,omitempty"`
+	ImageAuthToken     string       `json:"imageAuthToken,omitempty"`
 }
 
 type EditorSessionResponse struct {
@@ -70,8 +80,9 @@ type EditorSession struct {
 // ImageSource is retained in a separate private Redis record and is never
 // returned to a browser or embedded into the conversion output.
 type ImageSource struct {
-	BaseURL   string `json:"baseUrl"`
-	AuthToken string `json:"authToken"`
+	BaseURL   string       `json:"baseUrl"`
+	AuthToken string       `json:"authToken"`
+	Images    []ImageAsset `json:"images,omitempty"`
 }
 
 type EditorSessionPage struct {
@@ -81,13 +92,14 @@ type EditorSessionPage struct {
 }
 
 type EditorSessionSettings struct {
-	Template           string `json:"template"`
-	Date               string `json:"date"`
-	DocumentID         string `json:"documentId"`
-	FooterText         string `json:"footerText"`
-	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
-	ImageBaseURL       string `json:"imageBaseUrl,omitempty"`
-	ImageTokenSaved    bool   `json:"imageTokenSaved"`
+	Template           string   `json:"template"`
+	Date               string   `json:"date"`
+	DocumentID         string   `json:"documentId"`
+	FooterText         string   `json:"footerText"`
+	LineNumbersEnabled bool     `json:"lineNumbersEnabled"`
+	ImageBaseURL       string   `json:"imageBaseUrl,omitempty"`
+	ImageTokenSaved    bool     `json:"imageTokenSaved"`
+	ImagePaths         []string `json:"imagePaths,omitempty"`
 }
 
 type ErrorResponse struct {

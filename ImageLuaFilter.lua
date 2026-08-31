@@ -2,12 +2,6 @@ local pandoc = require 'pandoc'
 local system = require 'pandoc.system'
 -- Requires the draw.io CLI to be installed (e.g., `draw.io` binary in your PATH)
 
-local image_base_url = ""
-
-function Meta(meta)
-  image_base_url = pandoc.utils.stringify(meta.imageBaseUrl or "")
-end
-
 -- local base64 = require("mime") -- LuaSocket's MIME module for base64 decoding
 local function decode_base64(input)
   local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
@@ -94,7 +88,7 @@ function CodeBlock(block)
   end
 end
 
-function Image(elem)
+local function convert_image(elem, image_base_url)
   local src = elem.src
 
   -- Remove any trailing extra syntax (e.g. " =600x" or " =600x300")
@@ -113,6 +107,18 @@ function Image(elem)
 
   local latex_code = string.format("\\includegraphics[width=\\linewidth, height=\\textheight, keepaspectratio]{%s}", src)
   return pandoc.RawInline("latex", latex_code)
+end
+
+-- Pandoc calls element handlers before `Meta`, so reading metadata there leaves
+-- relative image URLs without their configured Wiki.js base URL. Walk the
+-- complete document instead, where its metadata is available first.
+function Pandoc(doc)
+  local image_base_url = pandoc.utils.stringify(doc.meta.imageBaseUrl or "")
+  return doc:walk({
+    Image = function(elem)
+      return convert_image(elem, image_base_url)
+    end,
+  })
 end
 
 local box_styles = {

@@ -106,6 +106,10 @@ func (h *Handlers) Convert(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "no markdown content provided"})
 		return
 	}
+	if err := validateImages(req.Images); err != nil {
+		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+		return
+	}
 	if strings.TrimSpace(req.ImageAuthToken) != "" && strings.TrimSpace(req.ImageBaseURL) == "" && strings.TrimSpace(req.EditorSessionID) == "" {
 		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "imageBaseUrl is required when imageAuthToken is provided"})
 		return
@@ -212,6 +216,10 @@ func (h *Handlers) CreateEditorSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "markdown is required"})
 		return
 	}
+	if err := validateImages(req.Images); err != nil {
+		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+		return
+	}
 	if strings.TrimSpace(req.ImageAuthToken) != "" && strings.TrimSpace(req.ImageBaseURL) == "" {
 		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "imageBaseUrl is required when imageAuthToken is provided"})
 		return
@@ -231,6 +239,7 @@ func (h *Handlers) CreateEditorSession(w http.ResponseWriter, r *http.Request) {
 			LineNumbersEnabled: req.LineNumbersEnabled,
 			ImageBaseURL:       strings.TrimSpace(req.ImageBaseURL),
 			ImageTokenSaved:    strings.TrimSpace(req.ImageAuthToken) != "",
+			ImagePaths:         imagePaths(req.Images),
 		},
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -241,10 +250,11 @@ func (h *Handlers) CreateEditorSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: fmt.Sprintf("failed storing editor session: %v", err)})
 		return
 	}
-	if strings.TrimSpace(req.ImageBaseURL) != "" || strings.TrimSpace(req.ImageAuthToken) != "" {
+	if strings.TrimSpace(req.ImageBaseURL) != "" || strings.TrimSpace(req.ImageAuthToken) != "" || len(req.Images) != 0 {
 		imageSource := model.ImageSource{
 			BaseURL:   strings.TrimSpace(req.ImageBaseURL),
 			AuthToken: strings.TrimSpace(req.ImageAuthToken),
+			Images:    req.Images,
 		}
 		if err := h.store.PutEditorImageSource(ctx, id, imageSource, 24*time.Hour); err != nil {
 			writeJSON(w, http.StatusInternalServerError, model.ErrorResponse{Error: fmt.Sprintf("failed storing private image source: %v", err)})
@@ -312,6 +322,7 @@ func (h *Handlers) SessionByID(w http.ResponseWriter, r *http.Request) {
 			session.Settings.ImageBaseURL = imageSource.BaseURL
 		}
 		session.Settings.ImageTokenSaved = strings.TrimSpace(imageSource.AuthToken) != ""
+		session.Settings.ImagePaths = imagePaths(imageSource.Images)
 	}
 	writeJSON(w, http.StatusOK, session)
 }
@@ -330,12 +341,44 @@ func (h *Handlers) applyEditorImageSource(ctx context.Context, req *model.Conver
 			if strings.TrimSpace(req.ImageAuthToken) == "" {
 				req.ImageAuthToken = imageSource.AuthToken
 			}
+			if len(req.Images) == 0 {
+				req.Images = imageSource.Images
+			}
 		}
 	}
 	if strings.TrimSpace(req.ImageAuthToken) != "" && strings.TrimSpace(req.ImageBaseURL) == "" {
 		return fmt.Errorf("imageBaseUrl is required when imageAuthToken is provided")
 	}
 	return nil
+}
+
+func validateImages(images []model.ImageAsset) error {
+	for _, image := range images {
+		if strings.TrimSpace(image.Path) == "" {
+			return fmt.Errorf("each image requires a path")
+		}
+		if len(image.Content) == 0 {
+			return fmt.Errorf("image %q has no content", image.Path)
+		}
+	}
+	return nil
+}
+
+func imagePaths(images []model.ImageAsset) []string {
+	paths := make([]string, 0, len(images))
+	seen := make(map[string]struct{}, len(images))
+	for _, image := range images {
+		path := strings.TrimSpace(image.Path)
+		if path == "" {
+			continue
+		}
+		if _, exists := seen[path]; exists {
+			continue
+		}
+		seen[path] = struct{}{}
+		paths = append(paths, path)
+	}
+	return paths
 }
 
 func decodeJSON(r *http.Request, out any) error {

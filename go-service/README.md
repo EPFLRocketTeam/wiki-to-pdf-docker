@@ -79,21 +79,24 @@ large documents and their contents do not need to be placed in a URL.
   "template": "space-race",
   "footerText": "Internal",
   "lineNumbersEnabled": false,
-  "imageBaseUrl": "https://wiki.example.ch",
-  "imageAuthToken": "short-lived-wiki-token"
+  "images": [
+    {
+      "path": "/general/rocket.png",
+      "content": "iVBORw0KGgoAAAANSUhEUg..."
+    }
+  ]
 }
 ```
 
-`imageBaseUrl` resolves relative Markdown image paths. When `imageAuthToken` is
-provided, it is sent as a Bearer token while the server downloads those images.
-The base URL is available to prefill the editor's image settings. The token is
-stored in a private Redis record for the session lifetime and is never returned
-by the editor-session API, included in the edit URL, or written to the
-generated LaTex project. A token can also be entered manually in the editor for
-the current conversion.
+For conversion, send each Wiki.js image in the `images` array with the exact
+path used by the Markdown image (for example, `/general/rocket.png`). `content`
+is a base64-encoded string. The service retains editor-session images privately
+and uses them on the later `POST /convert`; standalone conversion requests can
+provide the same `images` array directly. The service packages matching images
+without Wiki.js credentials or authenticated image requests.
 
-`imageAuthToken` requires `imageBaseUrl`. Use the Wiki.js site origin as the
-base URL (for example, `https://wiki.example.ch`), not its GraphQL endpoint.
+`imageBaseUrl` and `imageAuthToken` remain supported for existing clients, but
+new integrations should supply `images` directly.
 
 ## Contract replay tests
 
