@@ -106,6 +106,10 @@ func (h *Handlers) Convert(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "no markdown content provided"})
 		return
 	}
+	if strings.TrimSpace(req.ImageAuthToken) != "" && strings.TrimSpace(req.ImageBaseURL) == "" && strings.TrimSpace(req.EditorSessionID) == "" {
+		writeJSON(w, http.StatusBadRequest, model.ErrorResponse{Error: "imageBaseUrl is required when imageAuthToken is provided"})
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), h.cfg.ToolTimeout)
 	defer cancel()
@@ -225,6 +229,8 @@ func (h *Handlers) CreateEditorSession(w http.ResponseWriter, r *http.Request) {
 			DocumentID:         req.DocumentID,
 			FooterText:         req.FooterText,
 			LineNumbersEnabled: req.LineNumbersEnabled,
+			ImageBaseURL:       strings.TrimSpace(req.ImageBaseURL),
+			ImageTokenSaved:    strings.TrimSpace(req.ImageAuthToken) != "",
 		},
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -297,19 +303,24 @@ func (h *Handlers) SessionByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) applyEditorImageSource(ctx context.Context, req *model.ConvertRequest) error {
-	if req.EditorSessionID == "" {
-		return nil
+	if req.EditorSessionID != "" {
+		raw, err := h.store.GetEditorImageSource(ctx, req.EditorSessionID)
+		if err == nil {
+			var imageSource model.ImageSource
+			if err := json.Unmarshal(raw, &imageSource); err != nil {
+				return fmt.Errorf("invalid private image source")
+			}
+			if strings.TrimSpace(req.ImageBaseURL) == "" {
+				req.ImageBaseURL = imageSource.BaseURL
+			}
+			if strings.TrimSpace(req.ImageAuthToken) == "" {
+				req.ImageAuthToken = imageSource.AuthToken
+			}
+		}
 	}
-	raw, err := h.store.GetEditorImageSource(ctx, req.EditorSessionID)
-	if err != nil {
-		return nil
+	if strings.TrimSpace(req.ImageAuthToken) != "" && strings.TrimSpace(req.ImageBaseURL) == "" {
+		return fmt.Errorf("imageBaseUrl is required when imageAuthToken is provided")
 	}
-	var imageSource model.ImageSource
-	if err := json.Unmarshal(raw, &imageSource); err != nil {
-		return fmt.Errorf("invalid private image source")
-	}
-	req.ImageBaseURL = imageSource.BaseURL
-	req.ImageAuthToken = imageSource.AuthToken
 	return nil
 }
 

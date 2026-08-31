@@ -86,9 +86,11 @@ large documents and their contents do not need to be placed in a URL.
 
 `imageBaseUrl` resolves relative Markdown image paths. When `imageAuthToken` is
 provided, it is sent as a Bearer token while the server downloads those images.
-Both values are stored in a private Redis record for the session lifetime and
-are never returned by the editor-session API, included in the edit URL, or
-written to the generated LaTex project.
+The base URL is available to prefill the editor's image settings. The token is
+stored in a private Redis record for the session lifetime and is never returned
+by the editor-session API, included in the edit URL, or written to the
+generated LaTex project. A token can also be entered manually in the editor for
+the current conversion.
 
 `imageAuthToken` requires `imageBaseUrl`. Use the Wiki.js site origin as the
 base URL (for example, `https://wiki.example.ch`), not its GraphQL endpoint.

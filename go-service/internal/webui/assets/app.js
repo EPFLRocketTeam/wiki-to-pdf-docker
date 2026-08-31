@@ -358,6 +358,11 @@ async function mountEdit() {
       el("template").value = settings.template || "space-race";
       el("footerText").value = settings.footerText || "";
       el("lineNumbersEnabled").checked = Boolean(settings.lineNumbersEnabled);
+      el("imageBaseUrl").value = settings.imageBaseUrl || "";
+      const imageAccessStatus = el("imageAccessStatus");
+      if (settings.imageTokenSaved && imageAccessStatus) {
+        imageAccessStatus.textContent = "A private token is already saved for this session. Leave the token field empty to use it.";
+      }
     }
   } catch (error) {
     appendOutput("Session load error: " + error);
@@ -379,7 +384,9 @@ async function mountEdit() {
         documentId: el("documentId").value,
         footerText: el("footerText").value,
         template: el("template").value || "space-race",
-        lineNumbersEnabled: el("lineNumbersEnabled").checked
+        lineNumbersEnabled: el("lineNumbersEnabled").checked,
+        imageBaseUrl: el("imageBaseUrl").value.trim(),
+        imageAuthToken: el("imageAuthToken").value
       });
       const data = await response.json();
       if (!response.ok) {

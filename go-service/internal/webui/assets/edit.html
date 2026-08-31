@@ -85,6 +85,22 @@
       </div>
 
       <div class="card stack">
+        <h2>Wiki.js image access <small>(optional)</small></h2>
+        <p>Use these when Markdown contains relative Wiki.js image paths. The access token is used only for this conversion and is never returned by the session API.</p>
+        <div class="row">
+          <div>
+            <label for="imageBaseUrl">Wiki.js base URL</label>
+            <input id="imageBaseUrl" type="url" placeholder="https://wiki.example.ch" />
+          </div>
+          <div>
+            <label for="imageAuthToken">Wiki.js access token</label>
+            <input id="imageAuthToken" type="password" autocomplete="off" placeholder="Optional Bearer token" />
+          </div>
+        </div>
+        <div id="imageAccessStatus"></div>
+      </div>
+
+      <div class="card stack">
         <h2>Editors</h2>
         <div class="editor-grid">
           <div class="editor-shell">

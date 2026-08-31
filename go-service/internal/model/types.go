@@ -22,8 +22,8 @@ type ConvertRequest struct {
 	DocumentID         string `json:"documentId"`
 	FooterText         string `json:"footerText"`
 	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
-	ImageBaseURL       string `json:"-"`
-	ImageAuthToken     string `json:"-"`
+	ImageBaseURL       string `json:"imageBaseUrl,omitempty"`
+	ImageAuthToken     string `json:"imageAuthToken,omitempty"`
 }
 
 type ConvertResponse struct {
@@ -86,6 +86,8 @@ type EditorSessionSettings struct {
 	DocumentID         string `json:"documentId"`
 	FooterText         string `json:"footerText"`
 	LineNumbersEnabled bool   `json:"lineNumbersEnabled"`
+	ImageBaseURL       string `json:"imageBaseUrl,omitempty"`
+	ImageTokenSaved    bool   `json:"imageTokenSaved"`
 }
 
 type ErrorResponse struct {
