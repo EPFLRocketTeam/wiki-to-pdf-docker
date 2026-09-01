@@ -1,6 +1,10 @@
-# Local-only Redis port binding. The application binds to 127.0.0.1:8000 in the
-# base compose file so the host reverse proxy and local browser can reach it.
+# Local-only host port bindings. Production reaches the app through the external
+# nginx-proxy-manager Docker network declared in the base compose file.
 services:
+  web-go:
+    ports:
+      - "8000:8000"
+
   redis:
     ports:
       - "6379:6379"

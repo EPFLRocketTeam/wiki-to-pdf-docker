@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile.go
     expose:
       - "8000"
-    ports:
-      - "127.0.0.1:8000:8000"
     environment:
       - LISTEN_ADDR=:8000
       - REDIS_ADDR=redis-wiki-to-pdf:6379
@@ -25,6 +23,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    networks:
+      - default
+      - nginx-proxy
     volumes:
       - ./ert_wiki:/app/ert_wiki
       - ./app/latex_templates:/app/latex_templates:ro
@@ -47,6 +48,9 @@ services:
       - default
 
 networks:
+  nginx-proxy:
+    external: true
+    name: nginx-proxy-manager_default
   default:
     driver: bridge
 
