@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile.go
     expose:
       - "8000"
-    ports:
-      - "8000:8000"
     environment:
       - LISTEN_ADDR=:8000
       - REDIS_ADDR=redis-wiki-to-pdf:6379

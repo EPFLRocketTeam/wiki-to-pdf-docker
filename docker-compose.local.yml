@@ -1,6 +1,10 @@
-# Local-only Redis port binding. The app port is published by the base Compose
-# file because the deployed reverse proxy reaches the host on port 8000.
+# Local-only host port bindings. Dokploy deploys docker-compose.yml without this
+# file and routes to the service's internal exposed port.
 services:
+  web-go:
+    ports:
+      - "8000:8000"
+
   redis:
     ports:
       - "6379:6379"
