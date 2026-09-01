@@ -1,10 +1,6 @@
-# Local-only host port bindings. Dokploy routes production traffic to the
-# service's internal exposed port without requiring a named external network.
+# Local-only Redis port binding. The app port is published by the base Compose
+# file because the deployed reverse proxy reaches the host on port 8000.
 services:
-  web-go:
-    ports:
-      - "8000:8000"
-
   redis:
     ports:
       - "6379:6379"
