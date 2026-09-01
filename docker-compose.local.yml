@@ -1,9 +1,6 @@
-# Local-only host port bindings. Dokploy deploys docker-compose.yml without this file.
+# Local-only Redis port binding. The application binds to 127.0.0.1:8000 in the
+# base compose file so the host reverse proxy and local browser can reach it.
 services:
-  web-go:
-    ports:
-      - "8000:8000"
-
   redis:
     ports:
       - "6379:6379"
