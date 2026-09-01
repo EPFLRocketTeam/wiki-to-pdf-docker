@@ -10,6 +10,7 @@ services:
       - REDIS_ADDR=redis-wiki-to-pdf:6379
       - REDIS_DB=0
       - CORS_ALLOWED_ORIGINS=*
+      - REQUEST_BODY_LIMIT_BYTES=104857600
       - TOOL_TIMEOUT=120s
       - LUA_FILTER_PATH=/app/ImageLuaFilter.lua
       - BASE_TEMPLATE_PATH=/app/latex_templates/base.tex

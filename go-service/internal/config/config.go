@@ -31,7 +31,7 @@ func Load() (Config, error) {
 		RedisAddr:         envOrDefault("REDIS_ADDR", "127.0.0.1:6379"),
 		RedisDB:           envIntOrDefault("REDIS_DB", 0),
 		AllowedOrigins:    splitCSV(envOrDefault("CORS_ALLOWED_ORIGINS", "https://rocket-team.epfl.ch")),
-		RequestBodyLimit:  envInt64OrDefault("REQUEST_BODY_LIMIT_BYTES", 10*1024*1024),
+		RequestBodyLimit:  envInt64OrDefault("REQUEST_BODY_LIMIT_BYTES", 100*1024*1024),
 		ToolTimeout:       envDurationOrDefault("TOOL_TIMEOUT", 90*time.Second),
 		PandocBinary:      envOrDefault("PANDOC_BINARY", "pandoc"),
 		LuaLatexBinary:    envOrDefault("LUALATEX_BINARY", "lualatex"),

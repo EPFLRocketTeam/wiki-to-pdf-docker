@@ -52,7 +52,7 @@ go run ./cmd/server
 - `REDIS_ADDR` (default `127.0.0.1:6379`)
 - `REDIS_DB` (default `0`)
 - `CORS_ALLOWED_ORIGINS` (CSV, default `https://rocket-team.epfl.ch`)
-- `REQUEST_BODY_LIMIT_BYTES` (default `10485760`)
+- `REQUEST_BODY_LIMIT_BYTES` (default `104857600`, 100 MiB)
 - `TOOL_TIMEOUT` (default `90s`)
 - `PANDOC_BINARY` (default `pandoc`)
 - `LUALATEX_BINARY` (default `lualatex`)
