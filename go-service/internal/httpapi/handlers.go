@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -183,9 +185,12 @@ func (h *Handlers) GeneratePDF(w http.ResponseWriter, r *http.Request) {
 	filename = strings.ReplaceAll(filename, "\"", "")
 
 	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Length", strconv.Itoa(len(pdfBytes)))
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename+".pdf"))
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(pdfBytes)
+	if _, err := w.Write(pdfBytes); err != nil {
+		slog.Error("failed writing PDF response", "error", err, "title", filename, "bytes", len(pdfBytes))
+	}
 }
 
 func (h *Handlers) Store(w http.ResponseWriter, r *http.Request) {

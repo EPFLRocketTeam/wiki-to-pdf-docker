@@ -15,6 +15,8 @@ type Config struct {
 	RedisDB           int
 	AllowedOrigins    []string
 	RequestBodyLimit  int64
+	HTTPReadTimeout   time.Duration
+	HTTPWriteTimeout  time.Duration
 	ToolTimeout       time.Duration
 	PandocBinary      string
 	LuaLatexBinary    string
@@ -32,6 +34,8 @@ func Load() (Config, error) {
 		RedisDB:           envIntOrDefault("REDIS_DB", 0),
 		AllowedOrigins:    splitCSV(envOrDefault("CORS_ALLOWED_ORIGINS", "https://rocket-team.epfl.ch")),
 		RequestBodyLimit:  envInt64OrDefault("REQUEST_BODY_LIMIT_BYTES", 100*1024*1024),
+		HTTPReadTimeout:   envDurationOrDefault("HTTP_READ_TIMEOUT", 2*time.Minute),
+		HTTPWriteTimeout:  envDurationOrDefault("HTTP_WRITE_TIMEOUT", 6*time.Minute),
 		ToolTimeout:       envDurationOrDefault("TOOL_TIMEOUT", 90*time.Second),
 		PandocBinary:      envOrDefault("PANDOC_BINARY", "pandoc"),
 		LuaLatexBinary:    envOrDefault("LUALATEX_BINARY", "lualatex"),
