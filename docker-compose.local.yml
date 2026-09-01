@@ -1,5 +1,5 @@
-# Local-only host port bindings. Production reaches the app through the external
-# nginx-proxy-manager Docker network declared in the base compose file.
+# Local-only host port bindings. Dokploy routes production traffic to the
+# service's internal exposed port without requiring a named external network.
 services:
   web-go:
     ports:
