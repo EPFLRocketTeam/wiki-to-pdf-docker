@@ -27,6 +27,10 @@ services:
       - ./ert_wiki:/app/ert_wiki
       - ./app/latex_templates:/app/latex_templates:ro
       - ./ImageLuaFilter.lua:/app/ImageLuaFilter.lua:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${DOKPLOY_APP_NAME:-web-go}.rule=Host(`${TRAEFIK_HOST:-localhost}`)"
+      - "traefik.http.services.${DOKPLOY_APP_NAME:-web-go}.loadbalancer.server.port=8000"
 
   redis:
     image: "redis:7-alpine"
