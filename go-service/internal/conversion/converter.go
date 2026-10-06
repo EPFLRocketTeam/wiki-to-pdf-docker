@@ -81,7 +81,7 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 		"competition": {"backgroundImage": "fh2_title-page.png", "rheadImage": "fh2_patch.png"},
 		"hyperion":    {"backgroundImage": "h_title-page.png", "rheadImage": "h_patch.png"},
 		"icarus":      {"backgroundImage": "i_title-page.png", "rheadImage": "i_patch.png"},
-		"management":  {"backgroundImage": "m_title-page.png"},
+		"management":  {"backgroundImage": "m_title-page.png", "rheadImage": "m_patch.png"},
 		"space-race":  {"backgroundImage": "s_title-page.png", "rheadImage": "s_patch.png"},
 	}
 
