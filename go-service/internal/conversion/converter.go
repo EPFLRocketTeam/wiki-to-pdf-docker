@@ -14,6 +14,7 @@ import (
 	pathpkg "path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -36,6 +37,30 @@ type ConvertResult struct {
 }
 
 const bundledBaseTemplatePath = "/app/latex_templates/base.tex"
+
+var templateVars = map[string]map[string]string{
+	"default":     {},
+	"generic":     {"backgroundImage": "ert_title-page.png"},
+	"competition": {"backgroundImage": "fh2_title-page.png", "rheadImage": "fh2_patch.png"},
+	"hyperion":    {"backgroundImage": "h_title-page.png", "rheadImage": "h_patch.png"},
+	"icarus":      {"backgroundImage": "i_title-page.png", "rheadImage": "i_patch.png"},
+	"management":  {"backgroundImage": "m_title-page.png", "rheadImage": "m_patch.png"},
+	"space-race":  {"backgroundImage": "s_title-page.png", "rheadImage": "s_patch.png"},
+	"safety":      {"backgroundImage": "safety_title-page.png", "rheadImage": "safety_patch.png"},
+}
+
+// SelectableTemplates returns the template IDs offered by the web interface.
+func SelectableTemplates() []string {
+	templates := make([]string, 0, len(templateVars))
+	for name := range templateVars {
+		if name == "default" || name == "generic" {
+			continue
+		}
+		templates = append(templates, name)
+	}
+	sort.Strings(templates)
+	return templates
+}
 
 func NewConverter(cfg config.Config) *Converter {
 	return &Converter{
@@ -73,16 +98,6 @@ func (c *Converter) ConvertAndPackage(ctx context.Context, req model.ConvertRequ
 	metaBytes, _ := yaml.Marshal(metadata)
 	if err := os.WriteFile(metaPath, metaBytes, 0o644); err != nil {
 		return ConvertResult{}, err
-	}
-
-	templateVars := map[string]map[string]string{
-		"default":     {},
-		"generic":     {"backgroundImage": "ert_title-page.png"},
-		"competition": {"backgroundImage": "fh2_title-page.png", "rheadImage": "fh2_patch.png"},
-		"hyperion":    {"backgroundImage": "h_title-page.png", "rheadImage": "h_patch.png"},
-		"icarus":      {"backgroundImage": "i_title-page.png", "rheadImage": "i_patch.png"},
-		"management":  {"backgroundImage": "m_title-page.png", "rheadImage": "m_patch.png"},
-		"space-race":  {"backgroundImage": "s_title-page.png", "rheadImage": "s_patch.png"},
 	}
 
 	args := []string{

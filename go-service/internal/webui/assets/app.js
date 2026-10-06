@@ -122,6 +122,33 @@ function parseURLs(raw) {
     .filter((v) => v.length > 0);
 }
 
+async function populateTemplateOptions() {
+  const select = el("template");
+  if (!select) return;
+
+  try {
+    const { response, data } = await getJSON("/api/templates");
+    if (!response.ok || !Array.isArray(data)) {
+      throw new Error("invalid template list response");
+    }
+
+    select.replaceChildren();
+    for (const template of data) {
+      if (typeof template !== "string") continue;
+      const option = document.createElement("option");
+      option.value = template;
+      option.textContent = template;
+      select.appendChild(option);
+    }
+    select.value = data.includes("space-race") ? "space-race" : (data[0] || "");
+    select.disabled = select.options.length === 0;
+    if (select.disabled) throw new Error("template list is empty");
+  } catch (error) {
+    select.disabled = true;
+    appendOutput("Could not load templates: " + error);
+  }
+}
+
 function buildOverleafURL(sessionID, title) {
   const baseUrl = window.location.origin;
   const zipUri = `${baseUrl}/serve-zip-project/${sessionID}`;
@@ -211,6 +238,7 @@ async function mountIndex() {
     return;
   }
 
+  await populateTemplateOptions();
   const editors = await initMonacoEditors();
   const pages = [];
   let lastConvertSessionID = "";
@@ -404,6 +432,7 @@ async function mountEdit() {
     return;
   }
 
+  await populateTemplateOptions();
   initImagePreviewDialog();
 
   const editors = await initMonacoEditors();

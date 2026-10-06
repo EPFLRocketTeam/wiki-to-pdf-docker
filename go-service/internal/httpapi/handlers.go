@@ -51,6 +51,10 @@ func (h *Handlers) Healthz(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+func (h *Handlers) Templates(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, conversion.SelectableTemplates())
+}
+
 func (h *Handlers) Readyz(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
