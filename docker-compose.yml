@@ -7,7 +7,7 @@ services:
       - "8000"
     environment:
       - LISTEN_ADDR=:8000
-      - REDIS_ADDR=redis-wiki-to-pdf:6379
+      - REDIS_ADDR=redis:6379
       - REDIS_DB=0
       - CORS_ALLOWED_ORIGINS=*
       - REQUEST_BODY_LIMIT_BYTES=104857600
@@ -27,14 +27,9 @@ services:
       - ./ert_wiki:/app/ert_wiki
       - ./app/latex_templates:/app/latex_templates:ro
       - ./ImageLuaFilter.lua:/app/ImageLuaFilter.lua:ro
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.${DOKPLOY_APP_NAME:-web-go}.rule=Host(`${TRAEFIK_HOST:-localhost}`)"
-      - "traefik.http.services.${DOKPLOY_APP_NAME:-web-go}.loadbalancer.server.port=8000"
 
   redis:
-    image: "redis:7-alpine"
-    container_name: redis-wiki-to-pdf
+    image: redis:7-alpine
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -45,12 +40,6 @@ services:
       - "6379"
     volumes:
       - redis_data:/data
-    networks:
-      - default
-
-networks:
-  default:
-    driver: bridge
 
 volumes:
   redis_data:
