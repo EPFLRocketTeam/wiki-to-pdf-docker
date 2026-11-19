@@ -58,6 +58,7 @@ function registerLatexLanguage() {
   const verbEnvs = "(?:verbatim|Verbatim|lstlisting|minted|comment)\\*?";
   const mathBody = [
     [/%.*$/, "comment"],
+    [/\\(?:text|textbf|textit|textrm|mbox|intertext)\s*\{/, { token: "keyword", next: "@mathtext" }],
     [/\\[a-zA-Z@]+/, "keyword"],
     [/\\[^a-zA-Z]/, "string.escape"],
     [/[_^&]/, "operator"],
@@ -72,6 +73,8 @@ function registerLatexLanguage() {
         [new RegExp("\\\\begin(?=\\s*\\{" + verbEnvs + "\\})"), { token: "keyword.control", next: "@verbbegin" }],
         [/\\(begin|end)(?=\s*\{)/, "keyword.control"],
         [/\\verb\*?([^a-zA-Z*\s]).*?\1/, "string"],
+        [/\\(?:lstinline|mintinline)(?:\[[^\]]*\])?(?:\{[^}]*\})?([^a-zA-Z\s{]).*?\1/, "string"],
+        [/\\(?:url|path|href)\{[^}]*\}/, "string"],
         [/\\\[/, { token: "string", next: "@bracketmath" }],
         [/\\\(/, { token: "string", next: "@parenmath" }],
         [/\\(documentclass|usepackage|input|include|includegraphics|newcommand|renewcommand|def|let|section|subsection|subsubsection|paragraph|chapter|label|ref|cite|caption|item|textbf|textit|emph|texttt|hline)\b/, "keyword"],
@@ -88,6 +91,14 @@ function registerLatexLanguage() {
       displaymath: [[/\$\$/, { token: "string", next: "@pop" }], ...mathBody],
       bracketmath: [[/\\\]/, { token: "string", next: "@pop" }], ...mathBody],
       parenmath: [[/\\\)/, { token: "string", next: "@pop" }], ...mathBody],
+      mathtext: [
+        [/%.*$/, "comment"],
+        [/\{/, { token: "delimiter.bracket", next: "@mathtext" }],
+        [/\}/, { token: "keyword", next: "@pop" }],
+        [/\\[a-zA-Z@]+/, "keyword"],
+        [/\\[^a-zA-Z]/, "string.escape"],
+        [/[^\\{}%]+/, ""]
+      ],
       mathbegin: [[/\s*\{[^}]*\}/, { token: "keyword.control", switchTo: "@mathenv" }]],
       mathenv: [
         [new RegExp("\\\\end(?=\\s*\\{" + mathEnvs + "\\})"), { token: "keyword.control", next: "@envend" }],
