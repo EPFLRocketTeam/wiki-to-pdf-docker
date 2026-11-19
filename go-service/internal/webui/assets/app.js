@@ -37,6 +37,73 @@ function appendOutput(message) {
   if (outputHost) outputHost.textContent = output;
 }
 
+function registerLatexLanguage() {
+  if (monaco.languages.getLanguages().some((l) => l.id === "latex")) return;
+  monaco.languages.register({ id: "latex", extensions: [".tex"] });
+  monaco.languages.setLanguageConfiguration("latex", {
+    comments: { lineComment: "%" },
+    brackets: [["{", "}"], ["[", "]"], ["(", ")"]],
+    autoClosingPairs: [
+      { open: "{", close: "}" },
+      { open: "[", close: "]" },
+      { open: "$", close: "$" }
+    ],
+    surroundingPairs: [
+      { open: "{", close: "}" },
+      { open: "[", close: "]" },
+      { open: "$", close: "$" }
+    ]
+  });
+  const mathEnvs = "(?:equation|align|alignat|flalign|gather|multline|eqnarray|displaymath|math)\\*?";
+  const verbEnvs = "(?:verbatim|Verbatim|lstlisting|minted|comment)\\*?";
+  const mathBody = [
+    [/%.*$/, "comment"],
+    [/\\[a-zA-Z@]+/, "keyword"],
+    [/\\[^a-zA-Z]/, "string.escape"],
+    [/[_^&]/, "operator"],
+    [/[{}[\]]/, "delimiter.bracket"],
+    [/[^\\%_^&{}[\]]+/, "string"]
+  ];
+  monaco.languages.setMonarchTokensProvider("latex", {
+    tokenizer: {
+      root: [
+        [/%.*$/, "comment"],
+        [new RegExp("\\\\begin(?=\\s*\\{" + mathEnvs + "\\})"), { token: "keyword.control", next: "@mathbegin" }],
+        [new RegExp("\\\\begin(?=\\s*\\{" + verbEnvs + "\\})"), { token: "keyword.control", next: "@verbbegin" }],
+        [/\\(begin|end)(?=\s*\{)/, "keyword.control"],
+        [/\\verb\*?([^a-zA-Z*\s]).*?\1/, "string"],
+        [/\\\[/, { token: "string", next: "@bracketmath" }],
+        [/\\\(/, { token: "string", next: "@parenmath" }],
+        [/\\(documentclass|usepackage|input|include|includegraphics|newcommand|renewcommand|def|let|section|subsection|subsubsection|paragraph|chapter|label|ref|cite|caption|item|textbf|textit|emph|texttt|hline)\b/, "keyword"],
+        [/\\[a-zA-Z@]+\*?/, "type.identifier"],
+        [/\\[^a-zA-Z]/, "string.escape"],
+        [/\$\$/, { token: "string", next: "@displaymath" }],
+        [/\$/, { token: "string", next: "@inlinemath" }],
+        [/#\d/, "variable"],
+        [/[&~]/, "operator"],
+        [/[{}[\]]/, "delimiter.bracket"],
+        [/\d+(\.\d+)?(pt|em|ex|cm|mm|in|bp|\\textwidth|\\linewidth)?/, "number"]
+      ],
+      inlinemath: [[/\$/, { token: "string", next: "@pop" }], ...mathBody],
+      displaymath: [[/\$\$/, { token: "string", next: "@pop" }], ...mathBody],
+      bracketmath: [[/\\\]/, { token: "string", next: "@pop" }], ...mathBody],
+      parenmath: [[/\\\)/, { token: "string", next: "@pop" }], ...mathBody],
+      mathbegin: [[/\s*\{[^}]*\}/, { token: "keyword.control", switchTo: "@mathenv" }]],
+      mathenv: [
+        [new RegExp("\\\\end(?=\\s*\\{" + mathEnvs + "\\})"), { token: "keyword.control", next: "@envend" }],
+        ...mathBody
+      ],
+      verbbegin: [[/\s*\{[^}]*\}/, { token: "keyword.control", switchTo: "@verbatim" }]],
+      verbatim: [
+        [new RegExp("\\\\end(?=\\s*\\{" + verbEnvs + "\\})"), { token: "keyword.control", next: "@envend" }],
+        [/\\/, "string"],
+        [/[^\\]+/, "string"]
+      ],
+      envend: [[/\s*\{[^}]*\}/, { token: "keyword.control", next: "@popall" }]]
+    }
+  });
+}
+
 async function initMonacoEditors() {
   const markdownHost = el("markdownEditor");
   const latexHost = el("latexEditor");
@@ -66,6 +133,7 @@ async function initMonacoEditors() {
   return new Promise((resolve) => {
     window.require.config({ paths: { vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs" } });
     window.require(["vs/editor/editor.main"], () => {
+      registerLatexLanguage();
       const markdownEditor = monaco.editor.create(markdownHost, {
         value: "",
         language: "markdown",
