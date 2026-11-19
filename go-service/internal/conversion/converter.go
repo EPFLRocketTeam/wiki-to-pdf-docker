@@ -45,6 +45,7 @@ var templateVars = map[string]map[string]string{
 	"hyperion":    {"backgroundImage": "h_title-page.png", "rheadImage": "h_patch.png"},
 	"icarus":      {"backgroundImage": "i_title-page.png", "rheadImage": "i_patch.png"},
 	"management":  {"backgroundImage": "m_title-page.png", "rheadImage": "m_patch.png"},
+	"spaceshot":   {"backgroundImage": "sh_title-page.png", "rheadImage": "sh_patch.png"},
 	"space-race":  {"backgroundImage": "s_title-page.png", "rheadImage": "s_patch.png"},
 	"safety":      {"backgroundImage": "safety_title-page.png", "rheadImage": "safety_patch.png"},
 }
